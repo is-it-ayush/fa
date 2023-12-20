@@ -28,10 +28,11 @@ pub struct InnerConfigStore {
 impl InnerConfig {
     /// Read the configuration from the disk.
     pub fn read(config_path: &PathBuf) -> Result<InnerConfig, FaError> {
+
         match fs::metadata(&config_path) {
             Ok(_) => {
                 // read from existing config
-                let config_str = fs::read_to_string(&config_path)?;
+                let config_str = fs::read_to_string(config_path)?;
                 let config = toml::from_str::<InnerConfig>(config_str.as_str())?;
                 Ok(config)
             }
@@ -68,6 +69,11 @@ impl Config {
     pub fn new() -> Result<Self, FaError> {
         let path = get_config_path()?;
         let inner_config = InnerConfig::read(&path)?;
+
+        // ensure store directory.
+        let store_path = get_store_path(&path)?;
+        fs::create_dir_all(&store_path)?;
+
         Ok(Config {
             path: path,
             _inner: inner_config,
@@ -85,7 +91,6 @@ fn get_config_path() -> Result<PathBuf, FaError> {
 }
 
 /// Helper function to get the store path from configuration_path.
-#[allow(dead_code)]
 fn get_store_path(config_path: &PathBuf) -> Result<PathBuf, FaError> {
     let mut stores_path_buf = config_path.clone();
     stores_path_buf.pop();

@@ -96,6 +96,16 @@ impl From<io::Error> for FaError {
     }
 }
 
+impl From<serde_json::Error> for FaError {
+    fn from(value: serde_json::Error) -> Self {
+        FaError {
+            code: FaErrorCodes::INTERNAL,
+            reason: String::from("Could not transform values."),
+            source: Some(Box::new(value)),
+        }
+    }
+}
+
 #[test]
 fn test_new_error() {
     let error = FaError::new(FaErrorCodes::GENERIC, "Test Error.");
