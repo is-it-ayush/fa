@@ -1,9 +1,13 @@
-#![allow(non_shorthand_field_patterns)]
+use error::FaError;
+use fa::Fa;
 
-use error::{FaError, FaErrorCodes};
-
+mod cli;
+mod config;
 mod error;
+mod fa;
 
 fn main() -> Result<(), FaError> {
+    let fa = Fa::new()?;
+    fa.execute()?;
     Ok(())
 }
