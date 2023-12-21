@@ -82,7 +82,7 @@ impl Config {
 }
 
 /// Helper function to get the configuration_path.
-fn get_config_path() -> Result<PathBuf, FaError> {
+pub fn get_config_path() -> Result<PathBuf, FaError> {
     // read $HOME
     let home_path = env::var("HOME").map_err(FaError::from)?;
     let config_path_str = format!("{}/.config/fa/fa.toml", home_path);
@@ -91,7 +91,7 @@ fn get_config_path() -> Result<PathBuf, FaError> {
 }
 
 /// Helper function to get the store path from configuration_path.
-fn get_store_path(config_path: &PathBuf) -> Result<PathBuf, FaError> {
+pub fn get_store_path(config_path: &PathBuf) -> Result<PathBuf, FaError> {
     let mut stores_path_buf = config_path.clone();
     stores_path_buf.pop();
     stores_path_buf.push("stores");

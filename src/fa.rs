@@ -32,8 +32,12 @@ impl Fa {
         let cloned_command = &self.cli.command.clone();
         match cloned_command {
             Some(FaCommands::Config(fc)) => self.command_config(&fc),
-            Some(FaCommands::List) => self.command_list(),
-            Some(FaCommands::Add { user, password }) => self.command_add(&user, &password),
+            Some(FaCommands::List { store }) => self.command_list(&store),
+            Some(FaCommands::Add {
+                user,
+                password,
+                store,
+            }) => self.command_add(&user, &password, &store),
             Some(FaCommands::Store(_fs)) => todo!(),
             None => Ok(()),
         }
@@ -54,14 +58,18 @@ impl Fa {
         }
     }
 
-    fn command_list(&self) -> Result<(), FaError> {
-        println!("==== default store ====");
+    fn command_list(&self, passed_store: &Option<String>) -> Result<(), FaError> {
+        let store: Store = match passed_store {
+            Some(store_name) => Store::load(store_name, &self.config._inner.store.store_path)?,
+            None => self.default_store.clone(),
+        };
 
-        if self.default_store.data.is_empty() {
+        println!("==== {} store ====", &store.name);
+        if store.data.is_empty() {
             println!("the store is currently empty. add a login & a password to view it here!");
             println!("fa add <login> <password>");
         } else {
-            for (key, val) in self.default_store.data.iter() {
+            for (key, val) in store.data.iter() {
                 println!("{key} : {val}");
             }
         }
@@ -69,11 +77,20 @@ impl Fa {
         Ok(())
     }
 
-    fn command_add(&mut self, user: &String, password: &String) -> Result<(), FaError> {
-        self.default_store
-            .data
-            .insert(user.to_owned(), password.to_owned());
-        self.default_store.save()?;
+    fn command_add(
+        &mut self,
+        user: &String,
+        password: &String,
+        passed_store: &Option<String>,
+    ) -> Result<(), FaError> {
+        let mut store: Store = match passed_store {
+            Some(store_name) => Store::load(store_name, &self.config._inner.store.store_path)?,
+            None => self.default_store.clone(),
+        };
+
+        store.data.insert(user.to_owned(), password.to_owned());
+        store.save()?;
+        println!("{} was successfully added to {} ", &user, &store.name);
         Ok(())
     }
 }

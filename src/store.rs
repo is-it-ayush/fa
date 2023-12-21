@@ -10,6 +10,7 @@ pub type StoreData = HashMap<String, String>;
 
 #[derive(Debug, Clone)]
 pub struct Store {
+    pub name: String,
     pub path: PathBuf,
     pub data: StoreData,
 }
@@ -37,6 +38,7 @@ impl Store {
         };
 
         Ok(Store {
+            name: name.to_owned(),
             path: store_path,
             data: data,
         })
