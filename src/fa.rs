@@ -1,8 +1,11 @@
+use std::{ffi::OsStr, fs, path::Path};
+
 use crate::{
-    cli::{FaCli, FaCommandConfig, FaCommands},
+    cli::{FaCli, FaCommandConfig, FaCommandStore, FaCommands},
     config::Config,
-    error::FaError,
+    error::{FaError, FaErrorCodes},
     store::Store,
+    utils::osstr_to_str,
 };
 use clap::Parser;
 
@@ -33,14 +36,17 @@ impl Fa {
     pub fn execute(&mut self) -> Result<(), FaError> {
         let cloned_command = &self.cli.command.clone();
         match cloned_command {
-            Some(FaCommands::Config(fc)) => self.command_config(&fc),
+            // command group
+            Some(FaCommands::Config(fc)) => self.command_group_config(&fc),
+            Some(FaCommands::Store(fs)) => self.command_group_store(&fs),
+
+            // command
             Some(FaCommands::List { store }) => self.command_list(&store),
             Some(FaCommands::Add {
                 user,
                 password,
                 store,
             }) => self.command_add(&user, &password, &store),
-            Some(FaCommands::Store(_fs)) => todo!(),
             Some(FaCommands::Search { query, store }) => self.command_search(&query, &store),
             None => Ok(()),
         }
@@ -67,10 +73,11 @@ impl Fa {
         Ok(store)
     }
 
-    /// Match on the `fa config`.
-    fn command_config(&self, command_config: &FaCommandConfig) -> Result<(), FaError> {
+    /// Command Groups
+
+    fn command_group_config(&self, command_config: &FaCommandConfig) -> Result<(), FaError> {
         match command_config {
-            FaCommandConfig::View {} => {
+            FaCommandConfig::View => {
                 let store_path = &self.config._inner.store.store_path;
                 let store = &self.config._inner.store.default_store;
 
@@ -82,7 +89,39 @@ impl Fa {
         }
     }
 
-    /// Execute `fa list`
+    fn command_group_store(&self, command_store: &FaCommandStore) -> Result<(), FaError> {
+        match command_store {
+            FaCommandStore::List => {
+                let store_path = &self.config._inner.store.store_path;
+                for entry_result in fs::read_dir(&store_path)? {
+                    if let Ok(entry) = entry_result {
+                        if let Ok(file_type) = entry.file_type() {
+                            if file_type.is_file() {
+                                // get file name
+                                let file_name_osstr = entry.file_name();
+                                let file_name = osstr_to_str(&file_name_osstr)?.to_string();
+                                let extension = Path::new(&file_name)
+                                    .extension()
+                                    .and_then(OsStr::to_str)
+                                    .ok_or(FaError::new(
+                                        FaErrorCodes::GENERIC,
+                                        "Could not extract extension of the filename.",
+                                    ))?;
+
+                                if extension == "fa" {
+                                    println!("{}", &file_name);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Command
+
     fn command_list(&self, passed_store: &Option<String>) -> Result<(), FaError> {
         let store = self.get_store(&passed_store)?;
 
@@ -101,7 +140,6 @@ impl Fa {
         Ok(())
     }
 
-    /// Execute `fa add`
     fn command_add(
         &mut self,
         user: &String,

@@ -76,19 +76,11 @@ pub enum FaCommands {
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommandConfig {
     #[command(about = "View the current 'fa' configuration.")]
-    View {},
+    View,
 }
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommandStore {
-    List {
-        #[arg(
-            long,
-            short,
-            required = false,
-            help = "Optional store name.",
-            long_help = "Optional store name. If the store does not already exist, 'fa.' will throw an error."
-        )]
-        store: Option<String>,
-    },
+    #[command(about = "List all the stores.")]
+    List,
 }
