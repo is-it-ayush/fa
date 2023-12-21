@@ -6,11 +6,11 @@ use crate::{
 };
 use clap::Parser;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Fa {
     pub config: Config,
     pub default_store: Store,
-    cli: FaCli,
+    pub cli: FaCli,
 }
 
 impl Fa {
@@ -28,10 +28,12 @@ impl Fa {
         })
     }
 
-    pub fn execute(&self) -> Result<(), FaError> {
-        match &self.cli.command {
-            Some(FaCommands::Config(fc)) => self.command_config(fc),
+    pub fn execute(&mut self) -> Result<(), FaError> {
+        let cloned_command = &self.cli.command.clone();
+        match cloned_command {
+            Some(FaCommands::Config(fc)) => self.command_config(&fc),
             Some(FaCommands::List) => self.command_list(),
+            Some(FaCommands::Add { user, password }) => self.command_add(&user, &password),
             Some(FaCommands::Store(_fs)) => todo!(),
             None => Ok(()),
         }
@@ -53,6 +55,25 @@ impl Fa {
     }
 
     fn command_list(&self) -> Result<(), FaError> {
+        println!("==== default store ====");
+
+        if self.default_store.data.is_empty() {
+            println!("the store is currently empty. add a login & a password to view it here!");
+            println!("fa add <login> <password>");
+        } else {
+            for (key, val) in self.default_store.data.iter() {
+                println!("{key} : {val}");
+            }
+        }
+
+        Ok(())
+    }
+
+    fn command_add(&mut self, user: &String, password: &String) -> Result<(), FaError> {
+        self.default_store
+            .data
+            .insert(user.to_owned(), password.to_owned());
+        self.default_store.save()?;
         Ok(())
     }
 }

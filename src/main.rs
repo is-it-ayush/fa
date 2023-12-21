@@ -8,7 +8,7 @@ mod fa;
 mod store;
 
 fn main() -> Result<(), FaError> {
-    let fa = Fa::new()?;
+    let mut fa = Fa::new()?;
     fa.execute()?;
     Ok(())
 }

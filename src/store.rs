@@ -8,7 +8,7 @@ use std::{
 
 pub type StoreData = HashMap<String, String>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Store {
     pub path: PathBuf,
     pub data: StoreData,

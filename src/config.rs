@@ -8,18 +8,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{FaError, FaErrorCodes};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub path: PathBuf,
     pub _inner: InnerConfig,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct InnerConfig {
     pub store: InnerConfigStore,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct InnerConfigStore {
     pub store_path: String,
     pub default_store: String,
