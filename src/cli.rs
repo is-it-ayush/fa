@@ -9,42 +9,56 @@ pub struct FaCli {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommands {
-    #[command(subcommand, about = "the configuration related commands.")]
+    #[command(subcommand, about = "All configuration related commands go here.")]
     Config(FaCommandConfig),
 
-    #[command(subcommand, long_about = "Stores are a grou store realted commands.")]
+    #[command(subcommand, about = "All store related commands go here.")]
     Store(FaCommandStore),
 
-    #[command(about = "list credentials from default store")]
+    #[command(about = "List credentials from the 'default' store.")]
     List {
-        #[arg(long, short, required = false, long_help = "the store name (string).")]
+        #[arg(
+            long,
+            short,
+            required = false,
+            help = "Optional Store name.",
+            long_help = "Optional store name. If the store does not already exist, 'fa.' will throw an error."
+        )]
         store: Option<String>,
     },
 
-    #[command(about = "add a credential to the default store")]
+    #[command(about = "Add a credential to the 'default' store.")]
     Add {
         #[arg(
             index = 1,
-            long_help = "the login (string). this could be a email, username or anything else that is a string."
+            help = "The username/email/login. It is required.",
+            long_help = "The 'user' could be an email, username or literally anything else. This is generally an email or username. Is is requied."
         )]
         user: String,
 
-        #[arg(index = 2, long_help = "the password (string). this is your password.")]
+        #[arg(
+            index = 2,
+            help = "The password. It is required.",
+            long_help = "This is the password string. It is required."
+        )]
         password: String,
 
         #[arg(
             long,
             short,
             required = false,
-            long_help = "the store name (string). this is an optional argument and 'fa' uses a default store if the store does not exist (the default store is managed by 'fa'). if the store does not exist, 'fa' will create one for you."
+            help = "Optional store name.",
+            long_help = "Optional store name. If the store is provided and does not already exists. 'fa.' creates a store and then adds the credetianls to the store."
         )]
         store: Option<String>,
     },
 
+    #[command(about = "Search the store with a query.")]
     Search {
         #[arg(
             index = 1,
-            long_help = "the search query (string). this is the '<user>' from 'fa add <user> <password>' but it doesn't have to be complete."
+            help = "A query string. It is required.",
+            long_help = "A required search query string. This is usually the '<user>' from 'fa add <user> <password>' but it doesn't have to be complete i.e. you could search through the store with a partially complete '<user>'."
         )]
         query: String,
 
@@ -52,7 +66,8 @@ pub enum FaCommands {
             long,
             short,
             required = false,
-            long_help = "the store name (string)."
+            help = "Optional store name.",
+            long_help = "Optional store name. If the store does not already exist, 'fa.' will throw an error."
         )]
         store: Option<String>,
     },
@@ -60,6 +75,7 @@ pub enum FaCommands {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommandConfig {
+    #[command(about = "View the current 'fa' configuration.")]
     View {},
 }
 
@@ -70,7 +86,8 @@ pub enum FaCommandStore {
             long,
             short,
             required = false,
-            long_help = "the store name (string). this is an optional argument and 'fa' uses a default store if the store does not exist (the default store is managed by 'fa'). if the store does not exist, 'fa' will create one for you."
+            help = "Optional store name.",
+            long_help = "Optional store name. If the store does not already exist, 'fa.' will throw an error."
         )]
         store: Option<String>,
     },
