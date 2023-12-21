@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub type StoreData = HashMap<String, String>;
+pub type StoreData = HashMap<String, Vec<String>>;
 
 #[derive(Debug, Clone)]
 pub struct Store {

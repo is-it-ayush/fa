@@ -69,8 +69,10 @@ impl Fa {
             println!("the store is currently empty. add a login & a password to view it here!");
             println!("fa add <login> <password>");
         } else {
-            for (key, val) in store.data.iter() {
-                println!("{key} : {val}");
+            for (key, group) in store.data.iter() {
+                for val in group.iter() {
+                    println!("{key} : {val}");
+                }
             }
         }
 
@@ -88,8 +90,13 @@ impl Fa {
             None => self.default_store.clone(),
         };
 
-        store.data.insert(user.to_owned(), password.to_owned());
+        store
+            .data
+            .entry(user.to_owned())
+            .or_insert_with(Vec::new)
+            .push(password.to_owned());
         store.save()?;
+
         println!("{} was successfully added to {} ", &user, &store.name);
         Ok(())
     }
