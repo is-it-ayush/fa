@@ -10,7 +10,7 @@ use crate::error::{FaError, FaErrorCodes};
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    pub path: PathBuf,
+    pub config_path: PathBuf,
     pub _inner: InnerConfig,
 }
 
@@ -75,7 +75,7 @@ impl Config {
         fs::create_dir_all(&store_path)?;
 
         Ok(Config {
-            path: path,
+            config_path: path,
             _inner: inner_config,
         })
     }

@@ -1,7 +1,7 @@
 use crate::error::FaError;
 use std::{
     collections::HashMap,
-    fs::{File, OpenOptions},
+    fs::{self, File, OpenOptions},
     io::{Read, Write},
     path::{Path, PathBuf},
 };
@@ -18,9 +18,7 @@ pub struct Store {
 impl Store {
     pub fn load(name: &String, base_path: &String) -> Result<Self, FaError> {
         // get store path.
-        let store_file_name = format!("{}.fa", &name);
-        let mut store_path = Path::new(&base_path).to_path_buf();
-        store_path.push(&store_file_name);
+        let store_path = Self::get_file_path(&name, &base_path)?;
 
         // load store contents (create if non-existent).
         let mut store_file = OpenOptions::new()
@@ -53,5 +51,18 @@ impl Store {
             .open(&self.path)?;
         store_file.write_all(&data_str.as_bytes())?;
         Ok(())
+    }
+
+    pub fn get_file_path(store_name: &String, base_path: &String) -> Result<PathBuf, FaError> {
+        let store_file_name = format!("{}.fa", &store_name);
+        let mut store_path = Path::new(&base_path).to_path_buf();
+        store_path.push(&store_file_name);
+        Ok(store_path)
+    }
+
+    pub fn check_if_exists(store_name: &String, base_path: &String) -> Result<bool, FaError> {
+        // get store path.
+        let store_path = Self::get_file_path(&store_name, &base_path)?;
+        Ok(fs::metadata(&store_path).is_ok())
     }
 }

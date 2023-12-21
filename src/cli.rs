@@ -12,17 +12,12 @@ pub enum FaCommands {
     #[command(subcommand, about = "the configuration related commands.")]
     Config(FaCommandConfig),
 
-    #[command(subcommand, about = "the id and password store realted commands.")]
+    #[command(subcommand, long_about = "Stores are a grou store realted commands.")]
     Store(FaCommandStore),
 
     #[command(about = "list credentials from default store")]
     List {
-        #[arg(
-            long,
-            short,
-            required = false,
-            long_help = "the store name (string)."
-        )]
+        #[arg(long, short, required = false, long_help = "the store name (string).")]
         store: Option<String>,
     },
 
@@ -45,6 +40,22 @@ pub enum FaCommands {
         )]
         store: Option<String>,
     },
+
+    Search {
+        #[arg(
+            index = 1,
+            long_help = "the search query (string). this is the '<user>' from 'fa add <user> <password>' but it doesn't have to be complete."
+        )]
+        query: String,
+
+        #[arg(
+            long,
+            short,
+            required = false,
+            long_help = "the store name (string)."
+        )]
+        store: Option<String>,
+    },
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -53,4 +64,14 @@ pub enum FaCommandConfig {
 }
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum FaCommandStore {}
+pub enum FaCommandStore {
+    List {
+        #[arg(
+            long,
+            short,
+            required = false,
+            long_help = "the store name (string). this is an optional argument and 'fa' uses a default store if the store does not exist (the default store is managed by 'fa'). if the store does not exist, 'fa' will create one for you."
+        )]
+        store: Option<String>,
+    },
+}
