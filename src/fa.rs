@@ -81,8 +81,8 @@ impl Fa {
                 let store_path = &self.config._inner.store.store_path;
                 let store = &self.config._inner.store.default_store;
 
-                println!("store_path = {}", store_path);
-                println!("default_store = {}", store);
+                println!("fa: store_path = {}", store_path);
+                println!("fa: default_store = {}", store);
 
                 Ok(())
             }
@@ -109,7 +109,7 @@ impl Fa {
                                     ))?;
 
                                 if extension == "fa" {
-                                    println!("{}", &file_name);
+                                    println!("fa: {}", &file_name);
                                 }
                             }
                         }
@@ -125,14 +125,14 @@ impl Fa {
     fn command_list(&self, passed_store: &Option<String>) -> Result<(), FaError> {
         let store = self.get_store(&passed_store)?;
 
-        println!("==== {} store ====", &store.name);
+        println!("fa: using '{}' store", &store.name);
         if store.data.is_empty() {
-            println!("the store is currently empty. add a login & a password to view it here!");
-            println!("fa add <login> <password> --");
+            println!("fa: the store is currently empty. add a login & a password to view it here!");
+            println!("fa: fa add <login> <password> --");
         } else {
             for (key, group) in store.data.iter() {
                 for val in group.iter() {
-                    println!("{key} : {val}");
+                    println!("fa: {key} : {val}");
                 }
             }
         }
@@ -158,7 +158,7 @@ impl Fa {
             .push(password.to_owned());
         store.save()?;
 
-        println!("{} was successfully added to {} ", &user, &store.name);
+        println!("fa: {} was successfully added to {} ", &user, &store.name);
         Ok(())
     }
 
@@ -173,7 +173,7 @@ impl Fa {
         for (key, group) in store.data.iter() {
             if key.to_lowercase().starts_with(&query) {
                 for val in group.iter() {
-                    println!("{key} : {val}");
+                    println!("fa: {key} : {val}");
                 }
             }
         }
