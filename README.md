@@ -1,6 +1,6 @@
 ### fa.
 
-'fa' is very simple "terminal" password manager.
+'fa' is simple "terminal" password manager.
 
 ```sh
 # initialize fa.

@@ -1,9 +1,9 @@
 [package]
 name = "fa"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
 authors = ["Ayush Gupta <work@isitayush.dev>"]
-description = "'Fa' is a very simple terminal password manager."
+description = "'fa' is a simple terminal password manager."
 readme = "README.md"
 repository = "https://github.com/is-it-ayush/fa"
 
