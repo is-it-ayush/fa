@@ -139,7 +139,7 @@ impl Fa {
         match command_store {
             FaCommandStore::List => {
                 let store_path = &state.configuration._inner.store.base_path;
-                for entry in (fs::read_dir(&store_path)?).flatten() {
+                for entry in (fs::read_dir(store_path)?).flatten() {
                     if let Ok(file_type) = entry.file_type() {
                         if file_type.is_file() {
                             // get file name
