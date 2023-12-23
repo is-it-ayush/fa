@@ -29,10 +29,10 @@ wip 🚧
 
 ### configuration.
 
-'fa' store it's configuration in `$HOME/.config/fa/config.toml`. in my opinion,
-you should create a directory and do `git init`. you can then use this directory
-as a location of all of your stores. for now you'd have to manually back it up
-to git but i'll probably automate this in future!! :3
+- 'fa' store it's configuration in `$HOME/.config/fa/config.toml`.
+- in my opinion, before your run `fa ini` where it asks you a default store direcotry. you should create a directory and
+do `git init`. you can then use this directory as a location of all of your stores. for now you'd
+have to manually back it up to git but i'll probably automate this in future!! :3
 
 ```toml
 # $HOME/.config/fa/config.toml
@@ -44,3 +44,7 @@ default_store = "dibba"
 [security]
 gpg_fingerprint = "ABCDEF0123456789" # you can also use the full fingerprint
 ```
+
+### license.
+
+it's MIT! if you still wanna read it checkout [LICENSE](./LICENSE.md).
