@@ -116,11 +116,15 @@ impl Fa {
     ) -> Result<(), FaError> {
         match command_config {
             FaCommandConfig::View => {
+                let configuration_path = &state.configuration.config_file_path;
                 let store_path = &state.configuration._inner.store.base_path;
                 let store = &state.configuration._inner.store.default_store;
+                let fingerprint = &state.configuration._inner.security.gpg_fingerprint;
 
-                println!("fa: store_path = {}", store_path);
-                println!("fa: default_store = {}", store);
+                println!("fa: config.toml @ '{}'", configuration_path);
+                println!("fa: - store_path: {}", store_path);
+                println!("fa: - default_store: {}", store);
+                println!("fa: - fingerpint: {} ", fingerprint);
 
                 Ok(())
             }
@@ -135,15 +139,20 @@ impl Fa {
         match command_store {
             FaCommandStore::List => {
                 let store_path = &state.configuration._inner.store.base_path;
-                for entry in (fs::read_dir(store_path)?).flatten() {
+                for entry in (fs::read_dir(&store_path)?).flatten() {
                     if let Ok(file_type) = entry.file_type() {
                         if file_type.is_file() {
                             // get file name
                             let file_name_osstr = entry.file_name();
-                            let file_name = &file_name_osstr.to_str().ok_or(FaError::new(
+                            let file_name = file_name_osstr.to_str().ok_or(FaError::new(
                                 FaErrorCodes::Generic,
                                 "Could not convert file name to string.",
                             ))?;
+                            let (file_name_without_ext, _) =
+                                &file_name.rsplit_once('.').ok_or(FaError::new(
+                                    FaErrorCodes::Generic,
+                                    "Could not get the file name..",
+                                ))?;
 
                             let extension = Path::new(&file_name)
                                 .extension()
@@ -153,7 +162,8 @@ impl Fa {
                                     "Could not extract extension of the filename.",
                                 ))?;
                             if extension == "fa" {
-                                println!("fa: {}", &file_name);
+                                println!("fa: store directory @ '{}'", &store_path);
+                                println!("fa: - {}", file_name_without_ext);
                             }
                         }
                     }
@@ -172,14 +182,14 @@ impl Fa {
     ) -> Result<(), FaError> {
         let store = self.get_store(passed_store, state)?;
 
-        println!("fa: using '{}' store", &store.name);
+        println!("fa: store @ '{}'", &store.name);
         if store.data.is_empty() {
-            println!("fa: the store is currently empty. add a login & a password to view it here!");
-            println!("fa: fa add <login> <password> --");
+            println!("fa: the store is currently empty.");
+            println!("fa: try 'fa add <login> <password>'");
         } else {
             for (key, group) in store.data.iter() {
                 for val in group.iter() {
-                    println!("fa: {key} : {val}");
+                    println!("fa: - {key} : {val}");
                 }
             }
         }
@@ -203,7 +213,7 @@ impl Fa {
             .push(password.to_owned());
         store.save(&state.configuration._inner.security.gpg_fingerprint)?;
 
-        println!("fa: {} was successfully added to {} ", &user, &store.name);
+        println!("fa: successfully added {} to {} store.", &user, &store.name);
         Ok(())
     }
 
@@ -216,10 +226,11 @@ impl Fa {
         let store = self.get_store(passed_store, state)?;
         let query = passed_query.to_lowercase();
 
+        println!("fa: searching @ '{}'", &query);
         for (key, group) in store.data.iter() {
             if key.to_lowercase().starts_with(&query) {
                 for val in group.iter() {
-                    println!("fa: {key} : {val}");
+                    println!("fa: - {key} : {val}");
                 }
             }
         }
@@ -264,6 +275,7 @@ impl Fa {
         };
 
         let config = Config::new(store_path, store_name, fingerprint)?; //
+        println!("fa: successfully created a configuration.");
         Ok(config)
     }
 }
