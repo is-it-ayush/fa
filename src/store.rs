@@ -11,14 +11,18 @@ pub type StoreData = HashMap<String, Vec<String>>;
 #[derive(Debug, Clone)]
 pub struct Store {
     pub name: String,
-    pub path: PathBuf,
+    pub path: String,
     pub data: StoreData,
 }
 
 impl Store {
     pub fn load(name: &String, base_path: &String) -> Result<Self, FaError> {
         // get store path.
-        let store_path = Self::get_file_path(&name, &base_path)?;
+        let store_path = Self::get_file_path(name, base_path)?;
+        let store_path_str = store_path.to_str().ok_or(FaError::new(
+            crate::error::FaErrorCodes::Generic,
+            "Could not get store path.",
+        ))?;
 
         // load store contents (create if non-existent).
         let mut store_file = OpenOptions::new()
@@ -37,7 +41,7 @@ impl Store {
 
         Ok(Store {
             name: name.to_owned(),
-            path: store_path,
+            path: store_path_str.to_string(),
             data: data,
         })
     }
@@ -49,7 +53,7 @@ impl Store {
             .create(true)
             .append(false)
             .open(&self.path)?;
-        store_file.write_all(&data_str.as_bytes())?;
+        store_file.write_all(data_str.as_bytes())?;
         Ok(())
     }
 
@@ -62,7 +66,7 @@ impl Store {
 
     pub fn check_if_exists(store_name: &String, base_path: &String) -> Result<bool, FaError> {
         // get store path.
-        let store_path = Self::get_file_path(&store_name, &base_path)?;
-        Ok(fs::metadata(&store_path).is_ok())
+        let store_path = Self::get_file_path(store_name, base_path)?;
+        Ok(fs::metadata(store_path).is_ok())
     }
 }

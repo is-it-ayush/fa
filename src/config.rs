@@ -1,123 +1,109 @@
-use std::{
-    env,
-    fs::{self},
-    path::{Path, PathBuf},
-};
-
-use serde::{Deserialize, Serialize};
-
 use crate::error::{FaError, FaErrorCodes};
+use path_absolutize::Absolutize;
+use serde::{Deserialize, Serialize};
+use std::{
+    fs::{self, OpenOptions},
+    io::Write,
+    path::Path,
+};
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    pub config_path: PathBuf,
+    pub config_file_path: String,
     pub _inner: InnerConfig,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct InnerConfig {
     pub store: InnerConfigStore,
+    pub security: InnerConfigSecurity,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct InnerConfigStore {
-    pub store_path: String,
+    pub base_path: String,
     pub default_store: String,
 }
 
-impl InnerConfig {
-    /// Read the configuration from the disk.
-    pub fn read(config_path: &PathBuf) -> Result<InnerConfig, FaError> {
-
-        match fs::metadata(&config_path) {
-            Ok(_) => {
-                // read from existing config
-                let config_str = fs::read_to_string(config_path)?;
-                let config = toml::from_str::<InnerConfig>(config_str.as_str())?;
-                Ok(config)
-            }
-            Err(_) => {
-                // generate new config & save it on the path
-                let config = InnerConfig::generate()?;
-                Ok(config)
-            }
-        }
-    }
-
-    /// Generate a new configuration.
-    pub fn generate() -> Result<InnerConfig, FaError> {
-        let config_path = get_config_path()?;
-        let store_path = get_store_path(&config_path)?
-            .to_str()
-            .ok_or(FaError::new(
-                FaErrorCodes::GENERIC,
-                "Could not convert path to string.",
-            ))?
-            .to_string();
-        let config = InnerConfig {
-            store: InnerConfigStore {
-                store_path: store_path,
-                default_store: String::from("fa_store"),
-            },
-        };
-        Ok(config)
-    }
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct InnerConfigSecurity {
+    pub gpg_fingerprint: String,
 }
 
 impl Config {
-    /// Initialize a configuration instance with a path.
-    pub fn new() -> Result<Self, FaError> {
-        let path = get_config_path()?;
-        let inner_config = InnerConfig::read(&path)?;
+    pub fn new(
+        store_base_path: String,
+        store_name: String,
+        security_gpg_fingerprint: String,
+    ) -> Result<Self, FaError> {
+        let store_path = Path::new(&store_base_path)
+            .absolutize()?
+            .to_str()
+            .ok_or(FaError::new(
+                FaErrorCodes::Generic,
+                format!("Could not get the absolute path from {}.", &store_base_path).as_str(),
+            ))?
+            .to_string();
+        let inner_config = InnerConfig {
+            store: InnerConfigStore {
+                base_path: store_path,
+                default_store: store_name,
+            },
+            security: InnerConfigSecurity {
+                gpg_fingerprint: security_gpg_fingerprint,
+            },
+        };
 
-        // ensure store directory.
-        let store_path = get_store_path(&path)?;
-        fs::create_dir_all(&store_path)?;
+        // ensure store directory exists.
+        fs::create_dir_all(&store_base_path)?;
+
+        // ensure config directory exists.
+        let mut configuration_path = get_fa_from_home()?;
+        fs::create_dir_all(&configuration_path)?;
+        configuration_path = format!("{}/config.toml", configuration_path);
+
+        // save to disk
+        let config_str = toml::to_string(&inner_config)?;
+        let mut config_file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .append(false)
+            .create(true)
+            .truncate(true)
+            .open(&configuration_path)?;
+        config_file.write_all(config_str.as_bytes())?;
 
         Ok(Config {
-            config_path: path,
+            config_file_path: configuration_path,
             _inner: inner_config,
         })
     }
+
+    pub fn load_from_disk() -> Result<Self, FaError> {
+        let fa_dir = get_fa_from_home()?;
+        let configuration_path = format!("{}/config.toml", fa_dir);
+
+        match fs::metadata(&configuration_path) {
+            Ok(_) => {
+                // load and transform
+                let config_file_content = fs::read_to_string(&configuration_path)?;
+                let inner_config = toml::from_str::<InnerConfig>(&config_file_content)?;
+                Ok(Config {
+                    config_file_path: configuration_path,
+                    _inner: inner_config,
+                })
+            }
+            Err(_) => {
+                Err(FaError::new(
+                    FaErrorCodes::Generic,
+                    "Could not find a configuration file.",
+                ))
+            }
+        }
+    }
 }
 
-/// Helper function to get the configuration_path.
-pub fn get_config_path() -> Result<PathBuf, FaError> {
-    // read $HOME
-    let home_path = env::var("HOME").map_err(FaError::from)?;
-    let config_path_str = format!("{}/.config/fa/fa.toml", home_path);
-    // example path: /home/ayush/.config/fa/fa.toml
-    Ok(Path::new(&config_path_str).to_path_buf())
-}
-
-/// Helper function to get the store path from configuration_path.
-pub fn get_store_path(config_path: &PathBuf) -> Result<PathBuf, FaError> {
-    let mut stores_path_buf = config_path.clone();
-    stores_path_buf.pop();
-    stores_path_buf.push("stores");
-
-    // example path: /home/ayush/.config/fa/stores
-    Ok(stores_path_buf)
-}
-
-#[test]
-fn test_config_path() {
-    let config_path = get_config_path();
-    assert!(config_path.is_ok());
-
-    let unwrapped_path = config_path.unwrap().to_str().unwrap().to_string();
-    assert!(unwrapped_path.len() > 0);
-    assert!(unwrapped_path.contains("/.config/fa/fa.toml"));
-}
-
-#[test]
-fn test_store_path() {
-    let config_path = get_config_path().unwrap();
-    let store_path = get_store_path(&config_path)
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-    assert!(store_path.len() > 0);
-    assert!(store_path.contains("/.config/fa/stores"));
+pub fn get_fa_from_home() -> Result<String, FaError> {
+    let home_path = std::env::var("HOME")?;
+    Ok(format!("{}/.config/fa/", home_path))
 }

@@ -8,10 +8,10 @@ mod config;
 mod error;
 mod fa;
 mod store;
-mod utils;
+mod gpg;
 
 fn main() -> Result<(), FaError> {
-    let mut fa = Fa::new()?;
-    fa.execute()?;
+    let mut fa = Fa::new();
+    fa.run()?;
     Ok(())
 }

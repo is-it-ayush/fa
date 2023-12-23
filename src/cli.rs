@@ -9,78 +9,60 @@ pub struct FaCli {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommands {
-    #[command(subcommand, about = "All configuration related commands go here.")]
+    #[command(subcommand)]
     Config(FaCommandConfig),
 
-    #[command(subcommand, about = "All store related commands go here.")]
+    #[command(subcommand)]
     Store(FaCommandStore),
 
-    #[command(about = "List credentials from the 'default' store.")]
+    #[command()]
     List {
-        #[arg(
-            long,
-            short,
-            required = false,
-            help = "Optional Store name.",
-            long_help = "Optional store name. If the store does not already exist, 'fa.' will throw an error."
-        )]
+        #[arg(long, short, required = false)]
         store: Option<String>,
     },
 
-    #[command(about = "Add a credential to the 'default' store.")]
+    #[command()]
     Add {
-        #[arg(
-            index = 1,
-            help = "The username/email/login. It is required.",
-            long_help = "The 'user' could be an email, username or literally anything else. This is generally an email or username. Is is requied."
-        )]
+        #[arg(index = 1)]
         user: String,
 
-        #[arg(
-            index = 2,
-            help = "The password. It is required.",
-            long_help = "This is the password string. It is required."
-        )]
+        #[arg(index = 2)]
         password: String,
 
-        #[arg(
-            long,
-            short,
-            required = false,
-            help = "Optional store name.",
-            long_help = "Optional store name. If the store is provided and does not already exists. 'fa.' creates a store and then adds the credetianls to the store."
-        )]
+        #[arg(long, short, required = false)]
         store: Option<String>,
     },
 
-    #[command(about = "Search the store with a query.")]
+    #[command()]
     Search {
-        #[arg(
-            index = 1,
-            help = "A query string. It is required.",
-            long_help = "A required search query string. This is usually the '<user>' from 'fa add <user> <password>' but it doesn't have to be complete i.e. you could search through the store with a partially complete '<user>'."
-        )]
+        #[arg(index = 1)]
         query: String,
 
-        #[arg(
-            long,
-            short,
-            required = false,
-            help = "Optional store name.",
-            long_help = "Optional store name. If the store does not already exist, 'fa.' will throw an error."
-        )]
+        #[arg(long, short, required = false)]
         store: Option<String>,
+    },
+
+    #[command()]
+    Init {
+        #[arg(long, short)]
+        key_fingerprint: Option<String>,
+
+        #[arg(long, short = 'n')]
+        store: Option<String>,
+
+        #[arg(long, short = 'p')]
+        store_path: Option<String>,
     },
 }
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommandConfig {
-    #[command(about = "View the current 'fa' configuration.")]
+    #[command()]
     View,
 }
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommandStore {
-    #[command(about = "List all the stores.")]
+    #[command()]
     List,
 }
