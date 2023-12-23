@@ -93,12 +93,10 @@ impl Config {
                     _inner: inner_config,
                 })
             }
-            Err(_) => {
-                Err(FaError::new(
-                    FaErrorCodes::Generic,
-                    "Could not find a configuration file.",
-                ))
-            }
+            Err(_) => Err(FaError::new(
+                FaErrorCodes::Generic,
+                "Could not find a configuration file.",
+            )),
         }
     }
 }

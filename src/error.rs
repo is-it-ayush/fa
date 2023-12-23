@@ -1,4 +1,4 @@
-use std::{env::VarError, error::Error, fmt::Display, io};
+use std::{env::VarError, error::Error, fmt::Display, io, string::FromUtf8Error};
 
 #[derive(Debug, PartialEq)]
 pub enum FaErrorCodes {
@@ -113,6 +113,12 @@ impl From<dialoguer::Error> for FaError {
             reason: String::from("Could not ask for input."),
             source: Some(Box::new(value)),
         }
+    }
+}
+
+impl From<FromUtf8Error> for FaError {
+    fn from(_value: FromUtf8Error) -> Self {
+        FaError::new(FaErrorCodes::Generic, "Could not convert buffer to string.")
     }
 }
 

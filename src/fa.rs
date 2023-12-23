@@ -76,7 +76,11 @@ impl Fa {
             Some(sn) => sn,
             None => &state.configuration._inner.store.default_store,
         };
-        Store::load(store_name, &state.configuration._inner.store.base_path)
+        Store::load(
+            store_name,
+            &state.configuration._inner.store.base_path,
+            &state.configuration._inner.security.gpg_fingerprint,
+        )
     }
 
     pub fn get_store(
@@ -95,7 +99,11 @@ impl Fa {
                 source: None,
             })
         } else {
-            Store::load(store_name, &state.configuration._inner.store.base_path)
+            Store::load(
+                store_name,
+                &state.configuration._inner.store.base_path,
+                &state.configuration._inner.security.gpg_fingerprint,
+            )
         }
     }
 
@@ -193,7 +201,7 @@ impl Fa {
             .entry(user.to_owned())
             .or_insert_with(Vec::new)
             .push(password.to_owned());
-        store.save()?;
+        store.save(&state.configuration._inner.security.gpg_fingerprint)?;
 
         println!("fa: {} was successfully added to {} ", &user, &store.name);
         Ok(())

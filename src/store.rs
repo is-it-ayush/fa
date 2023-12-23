@@ -1,4 +1,4 @@
-use crate::error::FaError;
+use crate::{error::FaError, gpg::Gpg};
 use std::{
     collections::HashMap,
     fs::{self, File, OpenOptions},
@@ -16,7 +16,7 @@ pub struct Store {
 }
 
 impl Store {
-    pub fn load(name: &String, base_path: &String) -> Result<Self, FaError> {
+    pub fn load(name: &String, base_path: &String, fingerprint: &String) -> Result<Self, FaError> {
         // get store path.
         let store_path = Self::get_file_path(name, base_path)?;
         let store_path_str = store_path.to_str().ok_or(FaError::new(
@@ -30,13 +30,15 @@ impl Store {
             .write(true)
             .read(true)
             .open(&store_path)?;
-        let mut store_file_contents = String::new();
-        store_file.read_to_string(&mut store_file_contents)?;
+        let mut store_file_contents = Vec::new();
+        store_file.read_to_end(&mut store_file_contents)?;
 
-        // transform data.
-        let data: StoreData = match store_file_contents.is_empty() {
+        // decrypt
+        let data = Gpg::decrypt(fingerprint, store_file_contents)?;
+
+        let data: StoreData = match data.is_empty() {
             true => HashMap::new(),
-            false => serde_json::from_str::<StoreData>(&store_file_contents)?,
+            false => data,
         };
 
         Ok(Store {
@@ -46,14 +48,15 @@ impl Store {
         })
     }
 
-    pub fn save(&self) -> Result<(), FaError> {
+    pub fn save(&self, fingerprint: &String) -> Result<(), FaError> {
         let data_str = serde_json::to_string(&self.data)?;
         let mut store_file = File::options()
             .write(true)
             .create(true)
             .append(false)
             .open(&self.path)?;
-        store_file.write_all(data_str.as_bytes())?;
+        let encrypted_data = Gpg::encrypt(fingerprint, &data_str)?;
+        store_file.write_all(&encrypted_data)?;
         Ok(())
     }
 

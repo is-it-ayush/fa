@@ -7,8 +7,8 @@ mod cli;
 mod config;
 mod error;
 mod fa;
-mod store;
 mod gpg;
+mod store;
 
 fn main() -> Result<(), FaError> {
     let mut fa = Fa::new();
