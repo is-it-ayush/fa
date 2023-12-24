@@ -1,26 +1,29 @@
-use crate::{
-    error::{FaError, FaErrorCodes},
-    store::StoreData,
-};
+use crate::{error::FaError, store::StoreData};
 use dialoguer::Input;
 use std::{
     collections::HashMap,
-    io::Write,
+    fs::OpenOptions,
+    io::{Read, Write},
+    path::PathBuf,
     process::{Command, Stdio},
 };
 
 pub struct Gpg;
 
 impl Gpg {
-    pub fn decrypt(fingerprint: &String, data: Vec<u8>) -> Result<StoreData, FaError> {
+    pub fn decrypt(fingerprint: &String, file_path: PathBuf) -> Result<StoreData, FaError> {
+        // load file.
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .read(true)
+            .open(&file_path)?;
+        let mut file_contents = Vec::new();
+        file.read_to_end(&mut file_contents)?;
+
+        // decrypt.
         let gpg_decrypt = Command::new("gpg")
-            .args([
-                "--quiet",
-                "--local-user",
-                fingerprint,
-                "--decrypt",
-                "--yes",
-            ])
+            .args(["--quiet", "--local-user", fingerprint, "--decrypt", "--yes"])
             .stderr(Stdio::null())
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -28,19 +31,19 @@ impl Gpg {
         gpg_decrypt
             .stdin
             .as_ref()
-            .ok_or(FaError::new(
-                FaErrorCodes::Generic,
-                "Could not take a ref to stdin during decryption.",
-            ))?
-            .write_all(&data)?;
+            .ok_or(FaError::UnexpectedNone)?
+            .write_all(&file_contents)?;
+        let output = gpg_decrypt.wait_with_output()?;
+        if output.status.code().ok_or(FaError::UnexpectedNone)? != 0 {
+            return Err(FaError::GPGDecryptionError { path: file_path });
+        }
 
-        let decrypted_buffer = gpg_decrypt.wait_with_output()?.stdout;
-        let file_content = String::from_utf8(decrypted_buffer)?;
+        let output = String::from_utf8(output.stdout)?;
 
         // transform data.
-        let store_data: StoreData = match file_content.is_empty() {
+        let store_data: StoreData = match output.is_empty() {
             true => HashMap::new(),
-            false => serde_json::from_str::<StoreData>(&file_content)?,
+            false => serde_json::from_str::<StoreData>(&output)?,
         };
 
         Ok(store_data)
@@ -62,18 +65,18 @@ impl Gpg {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()?;
-
         gpg_encrypt
             .stdin
             .as_ref()
-            .ok_or(FaError::new(
-                FaErrorCodes::Generic,
-                "Could not take a ref to stdin during encryption.",
-            ))?
+            .ok_or(FaError::UnexpectedNone)?
             .write_all(data.as_bytes())?;
 
-        let encrypted_data = gpg_encrypt.wait_with_output()?.stdout;
-        Ok(encrypted_data)
+        let output = gpg_encrypt.wait_with_output()?;
+        if output.status.code().ok_or(FaError::UnexpectedNone)? != 0 {
+            return Err(FaError::GPGEncryptionError);
+        }
+
+        Ok(output.stdout)
     }
 
     pub fn check_if_fingerprint_exists(fingerprint: &String) -> Result<bool, FaError> {

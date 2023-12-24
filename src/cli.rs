@@ -9,10 +9,7 @@ pub struct FaCli {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommands {
-    #[command(
-        subcommand,
-        about = "all other configuration related commands."
-    )]
+    #[command(subcommand, about = "all other configuration related commands.")]
     Config(FaCommandConfig),
 
     #[command(subcommand, about = "all other store related commands.")]

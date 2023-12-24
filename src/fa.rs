@@ -1,7 +1,7 @@
 use crate::{
     cli::{FaCli, FaCommandConfig, FaCommandStore, FaCommands},
     config::Config,
-    error::{FaError, FaErrorCodes},
+    error::FaError,
     gpg::Gpg,
     store::Store,
 };
@@ -92,11 +92,12 @@ impl Fa {
             Some(sn) => sn,
             None => &state.configuration._inner.store.default_store,
         };
-        if !Store::check_if_exists(store_name, &state.configuration._inner.store.base_path)? {
-            Err(FaError {
-                code: FaErrorCodes::Generic,
-                reason: String::from("The store does not exist"),
-                source: None,
+        let store_file_path =
+            Store::get_file_path(store_name, &state.configuration._inner.store.base_path)?;
+
+        if !Store::check_if_exists(&store_file_path)? {
+            Err(FaError::NoStore {
+                path: store_file_path,
             })
         } else {
             Store::load(
@@ -142,28 +143,20 @@ impl Fa {
                 for entry in (fs::read_dir(store_path)?).flatten() {
                     if let Ok(file_type) = entry.file_type() {
                         if file_type.is_file() {
-                            // get file name
-                            let file_name_osstr = entry.file_name();
-                            let file_name = file_name_osstr.to_str().ok_or(FaError::new(
-                                FaErrorCodes::Generic,
-                                "Could not convert file name to string.",
-                            ))?;
-                            let (file_name_without_ext, _) =
-                                &file_name.rsplit_once('.').ok_or(FaError::new(
-                                    FaErrorCodes::Generic,
-                                    "Could not get the file name..",
-                                ))?;
-
-                            let extension = Path::new(&file_name)
+                            let file_name_osstring = entry.file_name();
+                            let file_name_with_extension =
+                                file_name_osstring.to_str().ok_or(FaError::UnexpectedNone)?;
+                            let (file_name, _) = file_name_with_extension
+                                .rsplit_once('.')
+                                .ok_or(FaError::UnexpectedNone)?;
+                            let extension = Path::new(file_name_with_extension)
                                 .extension()
                                 .and_then(OsStr::to_str)
-                                .ok_or(FaError::new(
-                                    FaErrorCodes::Generic,
-                                    "Could not extract extension of the filename.",
-                                ))?;
+                                .ok_or(FaError::UnexpectedNone)?;
+
                             if extension == "fa" {
                                 println!("fa: store directory @ '{}'", &store_path);
-                                println!("fa: - {}", file_name_without_ext);
+                                println!("fa: - {}", file_name);
                             }
                         }
                     }
