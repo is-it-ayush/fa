@@ -1,6 +1,7 @@
 #![allow(clippy::redundant_field_names)]
 
-use error::FaError;
+use std::process::ExitCode;
+
 use fa::Fa;
 
 mod cli;
@@ -10,8 +11,15 @@ mod fa;
 mod gpg;
 mod store;
 
-fn main() -> Result<(), FaError> {
+fn main() -> ExitCode {
     let mut fa = Fa::new();
-    fa.run()?;
-    Ok(())
+    match fa.run() {
+        Ok(_) => {
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("{}", e);
+            ExitCode::FAILURE
+        }
+    }
 }
