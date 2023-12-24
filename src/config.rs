@@ -1,4 +1,4 @@
-use crate::error::{FaError, FaErrorCodes};
+use crate::error::FaError;
 use path_absolutize::Absolutize;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -36,14 +36,12 @@ impl Config {
         store_name: String,
         security_gpg_fingerprint: String,
     ) -> Result<Self, FaError> {
-        let store_path = Path::new(&store_base_path)
-            .absolutize()?
+        let store_path_buf = Path::new(&store_base_path).absolutize()?;
+        let store_path: String = store_path_buf
             .to_str()
-            .ok_or(FaError::new(
-                FaErrorCodes::Generic,
-                format!("Could not get the absolute path from {}.", &store_base_path).as_str(),
-            ))?
+            .ok_or(FaError::UnexpectedNone)?
             .to_string();
+
         let inner_config = InnerConfig {
             store: InnerConfigStore {
                 base_path: store_path,
@@ -58,7 +56,7 @@ impl Config {
         fs::create_dir_all(&store_base_path)?;
 
         // ensure config directory exists.
-        let mut configuration_path = get_fa_from_home()?;
+        let mut configuration_path = get_base_directory()?;
         fs::create_dir_all(&configuration_path)?;
         configuration_path = format!("{}/config.toml", configuration_path);
 
@@ -80,28 +78,32 @@ impl Config {
     }
 
     pub fn load_from_disk() -> Result<Self, FaError> {
-        let fa_dir = get_fa_from_home()?;
-        let configuration_path = format!("{}/config.toml", fa_dir);
+        let file_path_string = format!("{}/config.toml", get_base_directory()?);
+        let file_path = Path::new(&file_path_string);
 
-        match fs::metadata(&configuration_path) {
+        match fs::metadata(file_path) {
             Ok(_) => {
-                // load and transform
-                let config_file_content = fs::read_to_string(&configuration_path)?;
-                let inner_config = toml::from_str::<InnerConfig>(&config_file_content)?;
+                let file_content = fs::read_to_string(file_path)?;
+                let inner_config = toml::from_str::<InnerConfig>(&file_content)?;
+
                 Ok(Config {
-                    config_file_path: configuration_path,
+                    config_file_path: file_path_string,
                     _inner: inner_config,
                 })
             }
-            Err(_) => Err(FaError::new(
-                FaErrorCodes::Generic,
-                "Could not find a configuration file.",
-            )),
+            Err(_) => Err(FaError::NoConfiguration {
+                path: file_path.to_path_buf(),
+            }),
         }
     }
 }
 
-pub fn get_fa_from_home() -> Result<String, FaError> {
-    let home_path = std::env::var("HOME")?;
+pub fn get_base_directory() -> Result<String, FaError> {
+    let home_variable = String::from("HOME");
+    let home_path =
+        std::env::var(&home_variable).map_err(|e| FaError::EnvironmentVariableError {
+            variable: home_variable,
+            source: e,
+        })?;
     Ok(format!("{}/.config/fa/", home_path))
 }

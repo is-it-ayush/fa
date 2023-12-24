@@ -1,8 +1,8 @@
 use crate::{error::FaError, gpg::Gpg};
 use std::{
     collections::HashMap,
-    fs::{self, File, OpenOptions},
-    io::{Read, Write},
+    fs::{self, File},
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -19,32 +19,21 @@ impl Store {
     pub fn load(name: &String, base_path: &String, fingerprint: &String) -> Result<Self, FaError> {
         // get store path.
         let store_path = Self::get_file_path(name, base_path)?;
-        let store_path_str = store_path.to_str().ok_or(FaError::new(
-            crate::error::FaErrorCodes::Generic,
-            "Could not get store path.",
-        ))?;
-
-        // load store contents (create if non-existent).
-        let mut store_file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .read(true)
-            .open(&store_path)?;
-        let mut store_file_contents = Vec::new();
-        store_file.read_to_end(&mut store_file_contents)?;
 
         // decrypt
-        let data = Gpg::decrypt(fingerprint, store_file_contents)?;
-
-        let data: StoreData = match data.is_empty() {
+        let data = Gpg::decrypt(fingerprint, store_path.clone())?;
+        let store_data: StoreData = match data.is_empty() {
             true => HashMap::new(),
             false => data,
         };
 
         Ok(Store {
             name: name.to_owned(),
-            path: store_path_str.to_string(),
-            data: data,
+            path: store_path
+                .to_str()
+                .ok_or(FaError::UnexpectedNone)?
+                .to_string(),
+            data: store_data,
         })
     }
 
@@ -67,9 +56,7 @@ impl Store {
         Ok(store_path)
     }
 
-    pub fn check_if_exists(store_name: &String, base_path: &String) -> Result<bool, FaError> {
-        // get store path.
-        let store_path = Self::get_file_path(store_name, base_path)?;
+    pub fn check_if_exists(store_path: &PathBuf) -> Result<bool, FaError> {
         Ok(fs::metadata(store_path).is_ok())
     }
 }
