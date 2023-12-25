@@ -49,14 +49,14 @@ impl Fa {
         }
 
         // initialize state.
-        let state = FaApplicationState {
+        let mut state = FaApplicationState {
             configuration: config,
         };
 
         match cloned_command {
             // command group
             Some(FaCommands::Config(fc)) => self.command_group_config(fc, &state),
-            Some(FaCommands::Store(fs)) => self.command_group_store(fs, &state),
+            Some(FaCommands::Store(fs)) => self.command_group_store(fs, &mut state),
 
             // command
             Some(FaCommands::List { store }) => self.command_list(store, &state),
@@ -140,34 +140,102 @@ impl Fa {
     fn command_group_store(
         &self,
         command_store: &FaCommandStore,
-        state: &FaApplicationState,
+        state: &mut FaApplicationState,
     ) -> Result<(), FaError> {
         match command_store {
             FaCommandStore::List => {
                 let store_path = &state.configuration._inner.store.base_path;
-                for entry in (fs::read_dir(store_path)?).flatten() {
-                    if let Ok(file_type) = entry.file_type() {
-                        if file_type.is_file() {
-                            let file_name_osstring = entry.file_name();
-                            let file_name_with_extension =
-                                file_name_osstring.to_str().ok_or(FaError::UnexpectedNone)?;
-                            let (file_name, _) = file_name_with_extension
-                                .rsplit_once('.')
-                                .ok_or(FaError::UnexpectedNone)?;
-                            let extension = Path::new(file_name_with_extension)
-                                .extension()
-                                .and_then(OsStr::to_str)
-                                .ok_or(FaError::UnexpectedNone)?;
+                println!(
+                    "{} | Using store directory '{}'",
+                    style("fa").bold().dim(),
+                    style(&store_path).bold().bright()
+                );
+                if fs::read_dir(store_path)?.count() == 0 {
+                    println!("{} | There are no stores yet.", style("fa").bold().dim());
+                } else {
+                    for entry in fs::read_dir(store_path)?.flatten() {
+                        if let Ok(file_type) = entry.file_type() {
+                            if file_type.is_file() {
+                                let file_name_osstring = entry.file_name();
+                                let file_name_with_extension =
+                                    file_name_osstring.to_str().ok_or(FaError::UnexpectedNone)?;
+                                let (file_name, _) = file_name_with_extension
+                                    .rsplit_once('.')
+                                    .ok_or(FaError::UnexpectedNone)?;
+                                let extension = Path::new(file_name_with_extension)
+                                    .extension()
+                                    .and_then(OsStr::to_str)
+                                    .ok_or(FaError::UnexpectedNone)?;
 
-                            if extension == "fa" {
-                                println!(
-                                    "{} | Using store directory '{}'",
-                                    style("fa").bold().dim(),
-                                    style(&store_path).bold().bright()
-                                );
-                                println!("{} | {}", style("fa").bold().dim(), file_name);
+                                if extension == "fa" {
+                                    println!("{} | {}", style("fa").bold().dim(), file_name);
+                                }
                             }
                         }
+                    }
+                }
+            }
+            FaCommandStore::Remove { store } => {
+                let store_path =
+                    Store::get_file_path(&store, &state.configuration._inner.store.base_path)?;
+                if !Store::check_if_exists(&store_path) {
+                    return Err(FaError::NoStore { path: store_path });
+                } else {
+                    // prompt for password before decrypting.
+                    Store::load(
+                        &store,
+                        store_path.clone(),
+                        &state.configuration._inner.security.gpg_fingerprint,
+                    )?;
+                    fs::remove_file(&store_path)?;
+                    println!(
+                        "{} | {} removed {} store.",
+                        style("fa").bold().dim(),
+                        style("Successfully").bold().green(),
+                        style(store).bright()
+                    );
+                }
+            }
+            FaCommandStore::Create { store } => {
+                let store_path =
+                    Store::get_file_path(&store, &state.configuration._inner.store.base_path)?;
+                Store::new(
+                    &store,
+                    store_path,
+                    &state.configuration._inner.security.gpg_fingerprint,
+                )?;
+                println!(
+                    "{} | {} added {} store.",
+                    style("fa").bold().dim(),
+                    style("Successfully").bold().green(),
+                    style(store).bright()
+                );
+            }
+            FaCommandStore::Default { store } => {
+                // check if exists.
+                let store_path =
+                    Store::get_file_path(&store, &state.configuration._inner.store.base_path)?;
+                match Store::check_if_exists(&store_path) {
+                    true => {
+                        let config = Config::new(
+                            state.configuration._inner.store.base_path.clone(),
+                            store.clone(),
+                            state.configuration._inner.security.gpg_fingerprint.clone(),
+                        )?;
+                        state.configuration = config;
+                        println!(
+                            "{} | {} is now your {} store.",
+                            style("fa").bold().dim(),
+                            style(store).bold().green(),
+                            style("default").bold().bright(),
+                        );
+                    }
+                    false => {
+                        println!(
+                            "{} | The store {} does not exist.",
+                            style("fa").bold().dim(),
+                            style(store).bold().red()
+                        );
                     }
                 }
             }
