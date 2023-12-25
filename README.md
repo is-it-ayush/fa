@@ -69,7 +69,9 @@ it might give me more ways to store more information. such as the
 
 you can always put up a pr solving any of the above todo's or anything that
 you think is mising. if i think it's good. i'll merge it! just don't make
-huge changes without creating a discussion first.
+huge changes without creating a discussion first. also, it's nice if you
+follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/).
+it's not a requirement tho but it helps.
 
 ### license.
 
