@@ -1,8 +1,8 @@
 use crate::{error::FaError, gpg::Gpg};
 use std::{
     collections::HashMap,
-    fs::{self, File},
-    io::Write,
+    fs::{self, File, OpenOptions},
+    io::{Read, Write},
     path::{Path, PathBuf},
 };
 
@@ -16,12 +16,49 @@ pub struct Store {
 }
 
 impl Store {
-    pub fn load(name: &String, base_path: &String, fingerprint: &String) -> Result<Self, FaError> {
-        // get store path.
-        let store_path = Self::get_file_path(name, base_path)?;
+    pub fn new(name: &String, store_path: PathBuf, fingerprint: &String) -> Result<Self, FaError> {
+        if Self::check_if_exists(&store_path) {
+            return Err(FaError::AlreadyPresent { path: store_path });
+        };
 
-        // decrypt
-        let data = Gpg::decrypt(fingerprint, store_path.clone())?;
+        // ensure parent directory exists.
+        fs::create_dir_all(store_path.parent().ok_or(FaError::UnexpectedNone)?)?;
+
+        let mut store_file = File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open(&store_path)?;
+        let encrypted_data = Gpg::encrypt(fingerprint, &String::new())?;
+        store_file.write_all(&encrypted_data)?;
+        let store_path_string = store_path
+            .to_str()
+            .ok_or(FaError::UnexpectedNone)?
+            .to_string();
+        Ok(Self {
+            name: name.to_string(),
+            path: store_path_string,
+            data: HashMap::new(),
+        })
+    }
+
+    pub fn load(name: &String, store_path: PathBuf, fingerprint: &String) -> Result<Self, FaError> {
+        // check if store exists.
+        if !Self::check_if_exists(&store_path) {
+            return Err(FaError::NoStore { path: store_path });
+        }
+
+        // load store.
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .read(true)
+            .open(&store_path)?;
+        let mut file_contents = Vec::new();
+        file.read_to_end(&mut file_contents)?;
+
+        let data = Gpg::decrypt(fingerprint, file_contents)?;
         let store_data: StoreData = match data.is_empty() {
             true => HashMap::new(),
             false => data,
@@ -56,7 +93,7 @@ impl Store {
         Ok(store_path)
     }
 
-    pub fn check_if_exists(store_path: &PathBuf) -> Result<bool, FaError> {
-        Ok(fs::metadata(store_path).is_ok())
+    pub fn check_if_exists(store_path: &PathBuf) -> bool {
+        fs::metadata(store_path).is_ok()
     }
 }

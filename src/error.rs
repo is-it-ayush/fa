@@ -1,6 +1,10 @@
 #[derive(Debug, thiserror::Error)]
 pub enum FaError {
     /// new
+    #[error("the gpg key is not present on the system.")]
+    InvalidFingerprint,
+
+    /// new
     #[error("configuration file is not present at: {:?}", path)]
     NoConfiguration { path: std::path::PathBuf },
 
@@ -9,12 +13,16 @@ pub enum FaError {
     NoStore { path: std::path::PathBuf },
 
     /// new
+    #[error("tried to create a store but the store was already present.")]
+    AlreadyPresent { path: std::path::PathBuf },
+
+    /// new
     #[error("could not encrypt data.")]
     GPGEncryptionError,
 
     /// new
-    #[error("could not decrypt file: {:?}", path)]
-    GPGDecryptionError { path: std::path::PathBuf },
+    #[error("could not decrypt data.")]
+    GPGDecryptionError,
 
     // result --> result
     #[error("input output error: {}", source)]

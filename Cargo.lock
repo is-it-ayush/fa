@@ -167,6 +167,7 @@ name = "fa"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "console",
  "dialoguer",
  "path-absolutize",
  "serde",

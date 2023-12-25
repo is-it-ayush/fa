@@ -50,7 +50,7 @@ gpg_fingerprint = "ABCDEF0123456789" # you can also use the full fingerprint
 ### todo.
 
 - [x] use [thiserror](https://docs.rs/thiserror/latest/thiserror/index.html) and tidy up slightly.
-- [ ] better output and input
+- [x] better output and input
 - [ ] copy to clipboard
 - [ ] better internal data structure instead of `Hashmap<K,V>`.
 it might give me more ways to store more information. such as the

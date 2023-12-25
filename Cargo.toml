@@ -3,7 +3,7 @@ name = "fa"
 version = "0.1.0"
 edition = "2021"
 authors = ["Ayush Gupta <work@isitayush.dev>"]
-description = "'fa' is a simple terminal password manager."
+description = "A simple \"terminal\" based password manager."
 readme = "README.md"
 repository = "https://github.com/is-it-ayush/fa"
 
@@ -11,6 +11,7 @@ repository = "https://github.com/is-it-ayush/fa"
 
 [dependencies]
 clap = { version = "4.4.11", features = ["derive"] }
+console = "0.15.7"
 dialoguer = "0.11.0"
 path-absolutize = "3.1.1"
 serde = { version = "1.0.193", features = ["derive"] }
