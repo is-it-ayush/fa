@@ -105,5 +105,5 @@ pub fn get_base_directory() -> Result<String, FaError> {
             variable: home_variable,
             source: e,
         })?;
-    Ok(format!("{}/.config/fa/", home_path))
+    Ok(format!("{}/.config/fa", home_path))
 }

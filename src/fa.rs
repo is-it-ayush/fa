@@ -13,6 +13,12 @@ use std::{ffi::OsStr, fs, path::Path};
 pub struct Fa {
     cli: FaCli,
 }
+use console::{style, Emoji};
+
+pub static SPARKLE: Emoji<'_, '_> = Emoji("✨ ", "");
+pub static KEY: Emoji<'_, '_> = Emoji("🔑 ", "");
+pub static MOAI: Emoji<'_, '_> = Emoji("🗿 ", "");
+pub static ROAD: Emoji<'_, '_> = Emoji("🛣️ ", "");
 
 #[derive(Debug, Clone)]
 pub struct FaApplicationState {
@@ -62,31 +68,16 @@ impl Fa {
             Some(FaCommands::Search { query, store }) => self.command_search(query, store, &state),
 
             // do nothing
-            Some(FaCommands::Init { .. }) => Ok(()), // handled specially
+            Some(FaCommands::Init { .. }) => Ok(()),
             None => Ok(()),
         }
-    }
-
-    pub fn get_or_create_store(
-        &self,
-        passed_store: &Option<String>,
-        state: &FaApplicationState,
-    ) -> Result<Store, FaError> {
-        let store_name = match passed_store {
-            Some(sn) => sn,
-            None => &state.configuration._inner.store.default_store,
-        };
-        Store::load(
-            store_name,
-            &state.configuration._inner.store.base_path,
-            &state.configuration._inner.security.gpg_fingerprint,
-        )
     }
 
     pub fn get_store(
         &self,
         passed_store: &Option<String>,
         state: &FaApplicationState,
+        create_new: bool,
     ) -> Result<Store, FaError> {
         let store_name = match passed_store {
             Some(sn) => sn,
@@ -95,16 +86,25 @@ impl Fa {
         let store_file_path =
             Store::get_file_path(store_name, &state.configuration._inner.store.base_path)?;
 
-        if !Store::check_if_exists(&store_file_path)? {
-            Err(FaError::NoStore {
-                path: store_file_path,
-            })
-        } else {
-            Store::load(
+        match Store::check_if_exists(&store_file_path) {
+            true => Store::load(
                 store_name,
-                &state.configuration._inner.store.base_path,
+                store_file_path,
                 &state.configuration._inner.security.gpg_fingerprint,
-            )
+            ),
+            false => {
+                if create_new {
+                    return Ok(Store::new(
+                        store_name,
+                        store_file_path,
+                        &state.configuration._inner.security.gpg_fingerprint,
+                    )?);
+                } else {
+                    return Err(FaError::NoStore {
+                        path: store_file_path,
+                    });
+                }
+            }
         }
     }
 
@@ -122,10 +122,15 @@ impl Fa {
                 let store = &state.configuration._inner.store.default_store;
                 let fingerprint = &state.configuration._inner.security.gpg_fingerprint;
 
-                println!("fa: config.toml @ '{}'", configuration_path);
-                println!("fa: - store_path: {}", store_path);
-                println!("fa: - default_store: {}", store);
-                println!("fa: - fingerpint: {} ", fingerprint);
+                let fa_header = style("fa").bold().dim();
+                println!(
+                    "{} | Located Configuration At '{}'",
+                    fa_header,
+                    style(configuration_path).bold()
+                );
+                println!("{} | store.path: {}", fa_header, store_path);
+                println!("{} | store.default_store: {}", fa_header, store);
+                println!("{} | security.fingerprint: {} ", fa_header, fingerprint);
 
                 Ok(())
             }
@@ -155,8 +160,12 @@ impl Fa {
                                 .ok_or(FaError::UnexpectedNone)?;
 
                             if extension == "fa" {
-                                println!("fa: store directory @ '{}'", &store_path);
-                                println!("fa: - {}", file_name);
+                                println!(
+                                    "{} | Using store directory '{}'",
+                                    style("fa").bold().dim(),
+                                    style(&store_path).bold().bright()
+                                );
+                                println!("{} | {}", style("fa").bold().dim(), file_name);
                             }
                         }
                     }
@@ -173,16 +182,26 @@ impl Fa {
         passed_store: &Option<String>,
         state: &FaApplicationState,
     ) -> Result<(), FaError> {
-        let store = self.get_store(passed_store, state)?;
+        let store = self.get_store(passed_store, state, false)?;
 
-        println!("fa: store @ '{}'", &store.name);
+        println!(
+            "{} | Using store '{}'",
+            style("fa").bold().dim(),
+            style(&store.name).bold().bright()
+        );
         if store.data.is_empty() {
-            println!("fa: the store is currently empty.");
-            println!("fa: try 'fa add <login> <password>'");
+            println!(
+                "{} | The store is currently empty.",
+                style("fa").bold().dim()
+            );
+            println!(
+                "{} | try 'fa add <login> <password>'",
+                style("fa").bold().dim()
+            );
         } else {
             for (key, group) in store.data.iter() {
                 for val in group.iter() {
-                    println!("fa: - {key} : {val}");
+                    println!("{} | {key} ~ {val}", style("fa").bold().dim());
                 }
             }
         }
@@ -197,7 +216,7 @@ impl Fa {
         passed_store: &Option<String>,
         state: &FaApplicationState,
     ) -> Result<(), FaError> {
-        let mut store: Store = self.get_or_create_store(passed_store, state)?;
+        let mut store: Store = self.get_store(passed_store, state, true)?;
 
         store
             .data
@@ -206,7 +225,13 @@ impl Fa {
             .push(password.to_owned());
         store.save(&state.configuration._inner.security.gpg_fingerprint)?;
 
-        println!("fa: successfully added {} to {} store.", &user, &store.name);
+        println!(
+            "{} | You've {} added '{}' login to {} store.",
+            style("fa").bold().dim(),
+            style("successfully").green(),
+            style(&user).bold().bright(),
+            style(&store.name).bold().bright()
+        );
         Ok(())
     }
 
@@ -216,14 +241,19 @@ impl Fa {
         passed_store: &Option<String>,
         state: &FaApplicationState,
     ) -> Result<(), FaError> {
-        let store = self.get_store(passed_store, state)?;
+        let store = self.get_store(passed_store, state, false)?;
         let query = passed_query.to_lowercase();
 
-        println!("fa: searching @ '{}'", &query);
+        println!(
+            "{} | Searching '{}' on {} store...",
+            style("fa").bold().dim(),
+            style(&query).bold().bright(),
+            style(store.name).bold().bright()
+        );
         for (key, group) in store.data.iter() {
             if key.to_lowercase().starts_with(&query) {
                 for val in group.iter() {
-                    println!("fa: - {key} : {val}");
+                    println!("{} | {key} ~ {val}", style("fa").bold().dim());
                 }
             }
         }
@@ -255,20 +285,35 @@ impl Fa {
 
         let store_name: String = match passed_store {
             Some(p_store) => p_store.to_owned(),
-            None => Input::new()
-                .with_prompt("Enter a default store name")
-                .interact_text()?,
+            None => {
+                let prompt_str = format!(
+                    "{} | {}What would you call your default credential store?",
+                    style("[2/3]").bold().dim(),
+                    MOAI
+                );
+                Input::new().with_prompt(prompt_str).interact_text()?
+            }
         };
 
         let store_path: String = match passed_store_path {
             Some(p_store_path) => p_store_path.to_owned(),
-            None => Input::new()
-                .with_prompt("Enter a path for all your stores")
-                .interact_text()?,
+            None => {
+                let prompt_str = format!(
+                    "{} | {}Where would all the stores be located at?",
+                    style("[3/3]").bold().dim(),
+                    ROAD
+                );
+                Input::new().with_prompt(prompt_str).interact_text()?
+            }
         };
 
-        let config = Config::new(store_path, store_name, fingerprint)?; //
-        println!("fa: successfully created a configuration.");
+        let config = Config::new(store_path, store_name.clone(), fingerprint)?; //
+        println!("{} | {}Successfully {} a config. You can now run '{}' to add a new credential to {} store.",
+                 style("fa").bold().dim(),
+                 SPARKLE,
+                 style("generated").bold().green(),
+                 style("fa add <login> <password>").bright(),
+                 style(store_name).bright());
         Ok(config)
     }
 }

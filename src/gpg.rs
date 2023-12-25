@@ -1,26 +1,16 @@
-use crate::{error::FaError, store::StoreData};
+use crate::{error::FaError, fa::KEY, store::StoreData};
+use console::style;
 use dialoguer::Input;
 use std::{
     collections::HashMap,
-    fs::OpenOptions,
-    io::{Read, Write},
-    path::PathBuf,
+    io::Write,
     process::{Command, Stdio},
 };
 
 pub struct Gpg;
 
 impl Gpg {
-    pub fn decrypt(fingerprint: &String, file_path: PathBuf) -> Result<StoreData, FaError> {
-        // load file.
-        let mut file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .read(true)
-            .open(&file_path)?;
-        let mut file_contents = Vec::new();
-        file.read_to_end(&mut file_contents)?;
-
+    pub fn decrypt(fingerprint: &String, data: Vec<u8>) -> Result<StoreData, FaError> {
         // decrypt.
         let gpg_decrypt = Command::new("gpg")
             .args(["--quiet", "--local-user", fingerprint, "--decrypt", "--yes"])
@@ -32,10 +22,11 @@ impl Gpg {
             .stdin
             .as_ref()
             .ok_or(FaError::UnexpectedNone)?
-            .write_all(&file_contents)?;
+            .write_all(&data)?;
         let output = gpg_decrypt.wait_with_output()?;
+
         if output.status.code().ok_or(FaError::UnexpectedNone)? != 0 {
-            return Err(FaError::GPGDecryptionError { path: file_path });
+            return Err(FaError::GPGDecryptionError);
         }
 
         let output = String::from_utf8(output.stdout)?;
@@ -92,14 +83,22 @@ impl Gpg {
     }
 
     pub fn fingerprint_prompt_until_true_or_term() -> Result<String, FaError> {
+        let prompt_str = format!(
+            "{} | {}What GPG Key would you like to use to encrypt/decrypt your stores (fingerprint/keyid)?",
+            style("[1/3]").bold().dim(),
+            KEY
+        );
         loop {
-            let fingerprint: String = Input::new()
-                .with_prompt("Enter a GPG Key Fingerprint")
+            let fingerprint = Input::new()
+                .with_prompt(&prompt_str)
+                .validate_with(|input: &String| -> Result<(), FaError> {
+                    match !Self::check_if_fingerprint_exists(input)? {
+                        true => Err(FaError::InvalidFingerprint),
+                        false => Ok(()),
+                    }
+                })
                 .interact_text()?;
-
-            if Self::check_if_fingerprint_exists(&fingerprint)? {
-                return Ok(fingerprint);
-            }
+            return Ok(fingerprint);
         }
     }
 }

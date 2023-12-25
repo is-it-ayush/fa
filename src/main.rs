@@ -14,9 +14,7 @@ mod store;
 fn main() -> ExitCode {
     let mut fa = Fa::new();
     match fa.run() {
-        Ok(_) => {
-            ExitCode::SUCCESS
-        }
+        Ok(_) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("{}", e);
             ExitCode::FAILURE
