@@ -1,38 +1,38 @@
 #[derive(Debug, thiserror::Error)]
 pub enum FaError {
     /// new
-    #[error("the gpg key is not present on the system.")]
-    InvalidFingerprint,
+    #[error("Could not find a key associated with the provided fingerprint. Are you sure the fingerprint/key id is correct and the ascociated key is present on the system?")]
+    InvalidFingerprint { fingerprint: String },
 
     /// new
-    #[error("configuration file is not present at: {:?}", path)]
+    #[error("Could not find a onfiguration file at {:?}. Have you ran 'fa init'?", path)]
     NoConfiguration { path: std::path::PathBuf },
 
     /// new
-    #[error("store file is not present at: {:?}", path)]
+    #[error("Could not find a store at {:?}", path)]
     NoStore { path: std::path::PathBuf },
 
     /// new
-    #[error("tried to create a store but the store was already present.")]
+    #[error("Attempted to create a new store but a store was already present at {:?}", path)]
     AlreadyPresent { path: std::path::PathBuf },
 
     /// new
-    #[error("could not encrypt data.")]
+    #[error("Could not encrypt data for the store.")]
     GPGEncryptionError,
 
     /// new
-    #[error("could not decrypt data.")]
+    #[error("Could not decrypt data for the store.")]
     GPGDecryptionError,
 
     // result --> result
-    #[error("input output error: {}", source)]
+    #[error("{}", source)]
     IOError {
         #[from]
         source: std::io::Error,
     },
 
     /// result --> result
-    #[error("${}: {}", variable, source)]
+    #[error("The environment variable ${} returned the error \"{}\"", variable, source)]
     EnvironmentVariableError {
         variable: String,
         #[source]
@@ -40,39 +40,39 @@ pub enum FaError {
     },
 
     /// option --> result
-    #[error("expected a value but recieved none instead.")]
+    #[error("A value was expected but recieved none instead.")]
     UnexpectedNone,
 
     /// result --> result
-    #[error("could not convert byte vector to string: {}", source)]
+    #[error("Could not convert a byte vector to a string. It returned \"{}\"", source)]
     ByteVectorToString {
         #[from]
         source: std::string::FromUtf8Error,
     },
 
     /// result --> result
-    #[error("could not serialize configuration: {}", source)]
+    #[error("Could not serialize configuration file. It returned \"{}\"", source)]
     SerializeConfiguration {
         #[from]
         source: toml::ser::Error,
     },
 
     /// result --> result
-    #[error("could not deserialize configuration: {}", source)]
+    #[error("Could not deserialize configuration file. It returned \"{}\"", source)]
     DeserializeConfiguration {
         #[from]
         source: toml::de::Error,
     },
 
     /// result --> result
-    #[error("serialization or deserialization error: {}", source)]
-    JsonError {
+    #[error("Could not serialize or deserialize store. It returned \"{}\"", source)]
+    StoreDeOrSerialization {
         #[from]
         source: serde_json::Error,
     },
 
     /// result ---> result
-    #[error("prompt error: {}", source)]
+    #[error("Could not take an input. It returned \"{}\"", source)]
     PromptError {
         #[from]
         source: dialoguer::Error,

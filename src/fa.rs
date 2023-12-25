@@ -283,7 +283,7 @@ impl Fa {
             }
         };
 
-        let store_name: String = match passed_store {
+        let mut store_name: String = match passed_store {
             Some(p_store) => p_store.to_owned(),
             None => {
                 let prompt_str = format!(
@@ -294,6 +294,7 @@ impl Fa {
                 Input::new().with_prompt(prompt_str).interact_text()?
             }
         };
+        store_name = store_name.replace(" ", "_");
 
         let store_path: String = match passed_store_path {
             Some(p_store_path) => p_store_path.to_owned(),
