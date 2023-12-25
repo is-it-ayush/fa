@@ -5,7 +5,10 @@ pub enum FaError {
     InvalidFingerprint { fingerprint: String },
 
     /// new
-    #[error("Could not find a onfiguration file at {:?}. Have you ran 'fa init'?", path)]
+    #[error(
+        "Could not find a onfiguration file at {:?}. Have you ran 'fa init'?",
+        path
+    )]
     NoConfiguration { path: std::path::PathBuf },
 
     /// new
@@ -13,7 +16,10 @@ pub enum FaError {
     NoStore { path: std::path::PathBuf },
 
     /// new
-    #[error("Attempted to create a new store but a store was already present at {:?}", path)]
+    #[error(
+        "Attempted to create a new store but a store was already present at {:?}",
+        path
+    )]
     AlreadyPresent { path: std::path::PathBuf },
 
     /// new
@@ -32,7 +38,11 @@ pub enum FaError {
     },
 
     /// result --> result
-    #[error("The environment variable ${} returned the error \"{}\"", variable, source)]
+    #[error(
+        "The environment variable ${} returned the error \"{}\"",
+        variable,
+        source
+    )]
     EnvironmentVariableError {
         variable: String,
         #[source]
@@ -44,7 +54,10 @@ pub enum FaError {
     UnexpectedNone,
 
     /// result --> result
-    #[error("Could not convert a byte vector to a string. It returned \"{}\"", source)]
+    #[error(
+        "Could not convert a byte vector to a string. It returned \"{}\"",
+        source
+    )]
     ByteVectorToString {
         #[from]
         source: std::string::FromUtf8Error,

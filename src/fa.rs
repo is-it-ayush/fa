@@ -294,7 +294,7 @@ impl Fa {
                 Input::new().with_prompt(prompt_str).interact_text()?
             }
         };
-        store_name = store_name.replace(" ", "_");
+        store_name = store_name.replace(' ', "_");
 
         let store_path: String = match passed_store_path {
             Some(p_store_path) => p_store_path.to_owned(),
