@@ -1,7 +1,5 @@
 #![allow(clippy::redundant_field_names)]
 
-use std::process::ExitCode;
-
 use fa::Fa;
 
 mod cli;
@@ -11,13 +9,8 @@ mod fa;
 mod gpg;
 mod store;
 
-fn main() -> ExitCode {
+fn main() -> Result<(), String> {
+    std::env::set_var("RUST_BACKTRACE", "1");
     let mut fa = Fa::new();
-    match fa.run() {
-        Ok(_) => ExitCode::SUCCESS,
-        Err(e) => {
-            eprintln!("{}", e);
-            ExitCode::FAILURE
-        }
-    }
+    fa.run().map_err(|e| e.to_string())
 }

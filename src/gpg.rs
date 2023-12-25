@@ -92,7 +92,9 @@ impl Gpg {
             .with_prompt(&prompt_str)
             .validate_with(|input: &String| -> Result<(), FaError> {
                 match !Self::check_if_fingerprint_exists(input)? {
-                    true => Err(FaError::InvalidFingerprint),
+                    true => Err(FaError::InvalidFingerprint {
+                        fingerprint: input.clone(),
+                    }),
                     false => Ok(()),
                 }
             })
