@@ -1,11 +1,14 @@
 [package]
 name = "fa"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+license = "MIT"
 authors = ["Ayush Gupta <work@isitayush.dev>"]
 description = "A simple \"terminal\" based password manager."
 readme = "README.md"
 repository = "https://github.com/is-it-ayush/fa"
+categories = ["command-line-utilities"]
+keywords = ["cli", "password-manager", "tool"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
