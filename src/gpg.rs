@@ -88,17 +88,15 @@ impl Gpg {
             style("[1/3]").bold().dim(),
             KEY
         );
-        loop {
-            let fingerprint = Input::new()
-                .with_prompt(&prompt_str)
-                .validate_with(|input: &String| -> Result<(), FaError> {
-                    match !Self::check_if_fingerprint_exists(input)? {
-                        true => Err(FaError::InvalidFingerprint),
-                        false => Ok(()),
-                    }
-                })
-                .interact_text()?;
-            return Ok(fingerprint);
-        }
+        Input::<String>::new()
+            .with_prompt(&prompt_str)
+            .validate_with(|input: &String| -> Result<(), FaError> {
+                match !Self::check_if_fingerprint_exists(input)? {
+                    true => Err(FaError::InvalidFingerprint),
+                    false => Ok(()),
+                }
+            })
+            .interact_text()
+            .map_err(|e| FaError::PromptError { source: e })
     }
 }

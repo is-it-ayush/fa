@@ -94,15 +94,15 @@ impl Fa {
             ),
             false => {
                 if create_new {
-                    return Ok(Store::new(
+                    Store::new(
                         store_name,
                         store_file_path,
                         &state.configuration._inner.security.gpg_fingerprint,
-                    )?);
+                    )
                 } else {
-                    return Err(FaError::NoStore {
+                    Err(FaError::NoStore {
                         path: store_file_path,
-                    });
+                    })
                 }
             }
         }
