@@ -177,13 +177,13 @@ impl Fa {
             }
             FaCommandStore::Remove { store } => {
                 let store_path =
-                    Store::get_file_path(&store, &state.configuration._inner.store.base_path)?;
+                    Store::get_file_path(store, &state.configuration._inner.store.base_path)?;
                 if !Store::check_if_exists(&store_path) {
                     return Err(FaError::NoStore { path: store_path });
                 } else {
                     // prompt for password before decrypting.
                     Store::load(
-                        &store,
+                        store,
                         store_path.clone(),
                         &state.configuration._inner.security.gpg_fingerprint,
                     )?;
@@ -198,9 +198,9 @@ impl Fa {
             }
             FaCommandStore::Create { store } => {
                 let store_path =
-                    Store::get_file_path(&store, &state.configuration._inner.store.base_path)?;
+                    Store::get_file_path(store, &state.configuration._inner.store.base_path)?;
                 Store::new(
-                    &store,
+                    store,
                     store_path,
                     &state.configuration._inner.security.gpg_fingerprint,
                 )?;
@@ -214,7 +214,7 @@ impl Fa {
             FaCommandStore::Default { store } => {
                 // check if exists.
                 let store_path =
-                    Store::get_file_path(&store, &state.configuration._inner.store.base_path)?;
+                    Store::get_file_path(store, &state.configuration._inner.store.base_path)?;
                 match Store::check_if_exists(&store_path) {
                     true => {
                         let config = Config::new(
