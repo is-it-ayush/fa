@@ -30,7 +30,14 @@ impl Store {
             .create(true)
             .append(false)
             .open(&store_path)?;
-        let encrypted_data = Gpg::encrypt(fingerprint, &String::new())?;
+
+        let encrypted_data = match Gpg::encrypt(fingerprint, &String::new()) {
+            Ok(d) => d,
+            Err(e) => {
+                fs::remove_file(&store_path)?;
+                return Err(e);
+            }
+        };
         store_file.write_all(&encrypted_data)?;
         let store_path_string = store_path
             .to_str()
