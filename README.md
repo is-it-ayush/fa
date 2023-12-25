@@ -14,10 +14,15 @@ fa list --store bingus_store # list all credentials on bingus store.
 fa search meow # search for credentials beginning with 'meow' on default store
 fa search bingus --store bingus_store # search for credentials beginning with 'bingus' on 'bingus_store'
 
+# store usage
+fs store list # list all stores
+fs store create spoingus_store # create a new store 'spoingus_store'.
+fs store default spoingus_store # set the default store to 'spoingus_store'.
+fs store remove spoingus_store # remove the spoingus store.
+
 # other
 fa config view # display the configuration utilized by 'fa'.
-fa store list # list all stores.
-fa help add # get help for a specific command
+fa help store create # get help for a specific command
 fa -V # print the version
 ```
 
@@ -51,6 +56,7 @@ gpg_fingerprint = "ABCDEF0123456789" # you can also use the full fingerprint
 
 - [x] use [thiserror](https://docs.rs/thiserror/latest/thiserror/index.html) and tidy up slightly.
 - [x] better output and input
+- [x] create, remove and default store command.
 - [ ] copy to clipboard
 - [ ] better internal data structure instead of `Hashmap<K,V>`.
 it might give me more ways to store more information. such as the

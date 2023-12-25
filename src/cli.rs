@@ -88,4 +88,22 @@ pub enum FaCommandConfig {
 pub enum FaCommandStore {
     #[command(about = "list all the stores.")]
     List,
+
+    #[command(about = "remove a store.")]
+    Remove {
+        #[arg(index = 1, help = "a required store name.")]
+        store: String,
+    },
+
+    #[command(about = "create an empty store.")]
+    Create {
+        #[arg(index = 1, help = "a required store name.")]
+        store: String,
+    },
+
+    #[command(about = "default a store.")]
+    Default {
+        #[arg(index = 1, help = "a required store name.")]
+        store: String,
+    },
 }
