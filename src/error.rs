@@ -1,6 +1,10 @@
 #[derive(Debug, thiserror::Error)]
 pub enum FaError {
     /// new
+    #[error("The input is invalid. The format for filtering is <filter>/<filter_query> where filter can be either 'site' or 'tag'.", )]
+    UnexpectedFilter,
+
+    /// new
     #[error("Could not find a key associated with the provided fingerprint. Are you sure the fingerprint/key id is correct and the ascociated key is present on the system?")]
     InvalidFingerprint { fingerprint: String },
 

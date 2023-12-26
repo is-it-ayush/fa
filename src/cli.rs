@@ -35,6 +35,17 @@ pub enum FaCommands {
 
         #[arg(long, short, required = false, help = "an optional store name.")]
         store: Option<String>,
+
+        #[arg(long, short, required = false, help = "an optional tag name.")]
+        tag: Option<String>,
+
+        #[arg(
+            long,
+            short = 'w',
+            required = false,
+            help = "an optional associated website."
+        )]
+        site: Option<String>,
     },
 
     #[command(about = "search through your store.")]
@@ -48,6 +59,9 @@ pub enum FaCommands {
 
         #[arg(long, short, required = false, help = "an optional store name.")]
         store: Option<String>,
+
+        #[arg(long, short, required = false)]
+        filter: Option<String>,
     },
 
     #[command(about = "initialize 'fa' & create configuration.")]
