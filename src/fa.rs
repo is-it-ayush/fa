@@ -302,7 +302,7 @@ impl Fa {
     fn command_add(
         &mut self,
         user: &String,
-        password: &String,
+        password: &str,
         passed_store: &Option<String>,
         passed_site: &Option<String>,
         passed_tag: &Option<String>,
@@ -311,7 +311,7 @@ impl Fa {
         let mut store: Store = self.get_store(passed_store, state, true)?;
 
         let cred = Credential {
-            password: password.clone(),
+            password: password.to_owned(),
             tag: passed_tag.clone(),
             site: passed_site.clone(),
         };
@@ -385,12 +385,12 @@ impl Fa {
             let starts_with_filter = _allowed_filters
                 .iter()
                 .any(|filter| _filter.starts_with(format!("{}/", &filter).as_str()));
-            if !_filter.contains("/") || !starts_with_filter {
+            if !_filter.contains('/') || !starts_with_filter {
                 return Err(FaError::UnexpectedFilter);
             }
 
             // split
-            let splits = _filter.splitn(2, "/").collect::<Vec<_>>();
+            let splits = _filter.splitn(2, '/').collect::<Vec<_>>();
             let (filter, filter_query) = (splits[0], splits[1]);
 
             println!(
