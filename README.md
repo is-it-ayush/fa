@@ -6,13 +6,22 @@
 # initialize fa.
 fa init
 
-# basic usage
-fa add meow@isitayush.dev password # add the credentials to the default store.
-fa add bingus@isitayush.dev password --store bingus_store # create and/or add the credentials to the bingus store.
+# add
+fa add meow@isitayush.dev password # add a credential to the 'default' store.
+fa add bingus@isitayush.dev password --store bingus_store #  add a credential to the 'bingus' store.
+fa add isitayush secret --site isitayush.dev --tag personal # add a credential with an associated site and/or a tag.
+
+# list
 fa list # list all credentials for the default store.
 fa list --store bingus_store # list all credentials on bingus store.
-fa search meow # search for credentials beginning with 'meow' on default store
-fa search bingus --store bingus_store # search for credentials beginning with 'bingus' on 'bingus_store'
+
+# search
+fa search meo # search for all credentials beginning with 'meow' on 'default' store
+fa search bingus --store bingus_store # search for all credentials beginning with 'bingus' on 'bingus_store'
+fa search '' --filter site/isitayush.dev # search for all credetentials that match 'isitayush.dev' site.
+fa search '' --filter tag/personal # search for all credentials that match the tag 'personal'
+fa search meo --filter site/isitayush.dev # search for all credentials that match both the 'meow' filter and site 'isitayush.dev' filter.
+
 
 # store usage
 fs store list # list all stores
