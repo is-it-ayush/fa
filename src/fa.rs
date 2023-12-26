@@ -3,7 +3,7 @@ use crate::{
     config::Config,
     error::FaError,
     gpg::Gpg,
-    store::Store,
+    store::{Credential, Store},
 };
 use clap::Parser;
 use dialoguer::Input;
@@ -64,8 +64,14 @@ impl Fa {
                 user,
                 password,
                 store,
-            }) => self.command_add(user, password, store, &state),
-            Some(FaCommands::Search { query, store }) => self.command_search(query, store, &state),
+                site,
+                tag,
+            }) => self.command_add(user, password, store, site, tag, &state),
+            Some(FaCommands::Search {
+                query,
+                store,
+                filter,
+            }) => self.command_search(query, store, filter, &state),
 
             // do nothing
             Some(FaCommands::Init { .. }) => Ok(()),
@@ -269,7 +275,23 @@ impl Fa {
         } else {
             for (key, group) in store.data.iter() {
                 for val in group.iter() {
-                    println!("{} | {key} ~ {val}", style("fa").bold().dim());
+                    let site = match &val.site {
+                        Some(s) => s,
+                        None => "-",
+                    };
+
+                    let tag = match &val.tag {
+                        Some(t) => t,
+                        None => "-",
+                    };
+                    println!(
+                        "{} | {} ~ {} | {} | {}",
+                        style("fa").bold().dim(),
+                        key,
+                        val.password,
+                        site,
+                        tag
+                    );
                 }
             }
         }
@@ -280,17 +302,25 @@ impl Fa {
     fn command_add(
         &mut self,
         user: &String,
-        password: &String,
+        password: &str,
         passed_store: &Option<String>,
+        passed_site: &Option<String>,
+        passed_tag: &Option<String>,
         state: &FaApplicationState,
     ) -> Result<(), FaError> {
         let mut store: Store = self.get_store(passed_store, state, true)?;
+
+        let cred = Credential {
+            password: password.to_owned(),
+            tag: passed_tag.clone(),
+            site: passed_site.clone(),
+        };
 
         store
             .data
             .entry(user.to_owned())
             .or_insert_with(Vec::new)
-            .push(password.to_owned());
+            .push(cred);
         store.save(&state.configuration._inner.security.gpg_fingerprint)?;
 
         println!(
@@ -303,29 +333,119 @@ impl Fa {
         Ok(())
     }
 
+    // sigh...there is a better way to write this but right now i'm not tidying it up.
     fn command_search(
         &mut self,
         passed_query: &str,
         passed_store: &Option<String>,
+        passed_filter: &Option<String>,
         state: &FaApplicationState,
     ) -> Result<(), FaError> {
         let store = self.get_store(passed_store, state, false)?;
         let query = passed_query.to_lowercase();
 
-        println!(
-            "{} | Searching '{}' on {} store...",
-            style("fa").bold().dim(),
-            style(&query).bold().bright(),
-            style(store.name).bold().bright()
-        );
-        for (key, group) in store.data.iter() {
-            if key.to_lowercase().starts_with(&query) {
-                for val in group.iter() {
-                    println!("{} | {key} ~ {val}", style("fa").bold().dim());
+        if passed_filter.is_none() {
+            println!(
+                "{} | Searching '{}' on {} store...",
+                style("fa").bold().dim(),
+                style(&query).bold().green().bright(),
+                style(store.name).bold().bright()
+            );
+            for (key, cred_group) in store.data.iter() {
+                if key.to_lowercase().starts_with(&query) {
+                    for cred in cred_group.iter() {
+                        let site = match &cred.site {
+                            Some(s) => s,
+                            None => "-",
+                        };
+
+                        let tag = match &cred.tag {
+                            Some(t) => t,
+                            None => "-",
+                        };
+                        println!(
+                            "{} | {} ~ {} | {} | {}",
+                            style("fa").bold().dim(),
+                            key,
+                            cred.password,
+                            site,
+                            tag
+                        );
+                    }
+                }
+            }
+        } else {
+            let _allowed_filters = Vec::from(["tag", "site"]);
+            let _filter = passed_filter
+                .as_ref()
+                .ok_or(FaError::UnexpectedNone)?
+                .as_str();
+
+            // verify <filter>/<filter_query> pattern.
+            let starts_with_filter = _allowed_filters
+                .iter()
+                .any(|filter| _filter.starts_with(format!("{}/", &filter).as_str()));
+            if !_filter.contains('/') || !starts_with_filter {
+                return Err(FaError::UnexpectedFilter);
+            }
+
+            // split
+            let splits = _filter.splitn(2, '/').collect::<Vec<_>>();
+            let (filter, filter_query) = (splits[0], splits[1]);
+
+            println!(
+                "{} | Searching '{}' on {} store with filter '{}' and filter value '{}'...",
+                style("fa").bold().dim(),
+                style(&query).bold().green().bright(),
+                style(store.name).bold().bright(),
+                style(&filter).bold().red().bright(),
+                style(&filter_query).bold().green().bright()
+            );
+
+            for (key, cred_group) in store.data.iter() {
+                if key.to_lowercase().starts_with(&query) {
+                    for cred in cred_group.iter() {
+                        let site = match &cred.site {
+                            Some(s) => s,
+                            None => "-",
+                        };
+                        let tag = match &cred.tag {
+                            Some(t) => t,
+                            None => "-",
+                        };
+                        match filter {
+                            "site" => {
+                                if site.starts_with(filter_query) {
+                                    println!(
+                                        "{} | {} ~ {} | {} | {}",
+                                        style("fa").bold().dim(),
+                                        key,
+                                        cred.password,
+                                        site,
+                                        tag
+                                    );
+                                }
+                            }
+                            "tag" => {
+                                if tag.starts_with(filter_query) {
+                                    println!(
+                                        "{} | {} ~ {} | {} | {}",
+                                        style("fa").bold().dim(),
+                                        key,
+                                        cred.password,
+                                        site,
+                                        tag
+                                    );
+                                }
+                            }
+                            _ => {
+                                println!("You know, this code should've never been executed. I think my code sucks.");
+                            }
+                        }
+                    }
                 }
             }
         }
-
         Ok(())
     }
 

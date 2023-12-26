@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{error::FaError, gpg::Gpg};
 use std::{
     collections::HashMap,
@@ -6,7 +8,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub type StoreData = HashMap<String, Vec<String>>;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Credential {
+    pub site: Option<String>,
+    pub tag: Option<String>,
+    pub password: String,
+}
+
+pub type StoreData = HashMap<String, Vec<Credential>>;
 
 #[derive(Debug, Clone)]
 pub struct Store {
