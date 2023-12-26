@@ -57,11 +57,12 @@ gpg_fingerprint = "ABCDEF0123456789" # you can also use the full fingerprint
 - [x] use [thiserror](https://docs.rs/thiserror/latest/thiserror/index.html) and tidy up slightly.
 - [x] better output and input
 - [x] create, remove and default store command.
-- [ ] copy to clipboard
-- [ ] better internal data structure instead of `Hashmap<K,V>`.
+- [x] better internal data structure instead of `Hashmap<K,V>`.
 it might give me more ways to store more information. such as the
   - assocaited websites
   - tags?
+  - post implementation note: `Credential` struct is meh but it works so i'm not complaining :3.
+- [ ] copy to clipboard
 - [ ] generator
 - [ ] better ci and possibly arm64/v8 build.
 
