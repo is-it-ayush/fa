@@ -207,7 +207,7 @@ impl Fa {
                     );
                 }
             }
-            FaCommandStore::Create { store } => {
+            FaCommandStore::Add { store } => {
                 let store_path =
                     Store::get_file_path(store, &state.configuration._inner.store.base_path)?;
                 Store::new(

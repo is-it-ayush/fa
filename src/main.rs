@@ -1,4 +1,8 @@
 #![allow(clippy::redundant_field_names)]
+#![deny(missing_docs)]
+
+//! The main function of the program. Here we create an instance
+//! of 'fa', run it and also print the bubbled (recoverable) errors.
 
 use fa::Fa;
 
