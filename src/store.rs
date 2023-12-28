@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{error::FaError, gpg::Gpg};
 use std::{
-    collections::HashMap,
     fs::{self, File, OpenOptions},
     io::{Read, Write},
     path::{Path, PathBuf},
@@ -10,18 +9,17 @@ use std::{
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Credential {
+    pub user: String,
+    pub password: String,
     pub site: Option<String>,
     pub tag: Option<String>,
-    pub password: String,
 }
-
-pub type StoreData = HashMap<String, Vec<Credential>>;
 
 #[derive(Debug, Clone)]
 pub struct Store {
     pub name: String,
     pub path: String,
-    pub data: StoreData,
+    pub data: Vec<Credential>,
 }
 
 impl Store {
@@ -55,7 +53,7 @@ impl Store {
         Ok(Self {
             name: name.to_string(),
             path: store_path_string,
-            data: HashMap::new(),
+            data: Vec::new(),
         })
     }
 
@@ -75,8 +73,8 @@ impl Store {
         file.read_to_end(&mut file_contents)?;
 
         let data = Gpg::decrypt(fingerprint, file_contents)?;
-        let store_data: StoreData = match data.is_empty() {
-            true => HashMap::new(),
+        let store_data = match data.is_empty() {
+            true => Vec::new(),
             false => data,
         };
 

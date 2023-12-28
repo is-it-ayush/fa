@@ -1,6 +1,11 @@
 #[derive(Debug, thiserror::Error)]
 pub enum FaError {
     /// new
+    #[error("The given credentials already exists within the store.")]
+    CredentialsAlreadyExists,
+
+
+    /// new
     #[error("The input is invalid. The format for filtering is <filter>/<filter_query> where filter can be either 'site' or 'tag'.", )]
     UnexpectedFilter,
 

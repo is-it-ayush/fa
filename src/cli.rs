@@ -48,6 +48,7 @@ pub enum FaCommands {
         site: Option<String>,
     },
 
+
     #[command(about = "search through your store.")]
     Search {
         #[arg(

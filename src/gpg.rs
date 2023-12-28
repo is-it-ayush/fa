@@ -1,8 +1,7 @@
-use crate::{error::FaError, fa::KEY, store::StoreData};
+use crate::{error::FaError, fa::KEY, store::Credential};
 use console::style;
 use dialoguer::Input;
 use std::{
-    collections::HashMap,
     io::Write,
     process::{Command, Stdio},
 };
@@ -10,7 +9,7 @@ use std::{
 pub struct Gpg;
 
 impl Gpg {
-    pub fn decrypt(fingerprint: &String, data: Vec<u8>) -> Result<StoreData, FaError> {
+    pub fn decrypt(fingerprint: &String, data: Vec<u8>) -> Result<Vec<Credential>, FaError> {
         // decrypt.
         let gpg_decrypt = Command::new("gpg")
             .args(["--quiet", "--local-user", fingerprint, "--decrypt", "--yes"])
@@ -32,9 +31,9 @@ impl Gpg {
         let output = String::from_utf8(output.stdout)?;
 
         // transform data.
-        let store_data: StoreData = match output.is_empty() {
-            true => HashMap::new(),
-            false => serde_json::from_str::<StoreData>(&output)?,
+        let store_data = match output.is_empty() {
+            true => Vec::new(),
+            false => serde_json::from_str::<Vec<Credential>>(&output)?,
         };
 
         Ok(store_data)
