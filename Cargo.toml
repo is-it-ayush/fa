@@ -4,7 +4,7 @@ version = "0.2.0"
 edition = "2021"
 license = "MIT"
 authors = ["Ayush Gupta <work@isitayush.dev>"]
-description = "A simple \"terminal\" based password manager."
+description = "A password manager that lives in your terminal."
 readme = "README.md"
 repository = "https://github.com/is-it-ayush/fa"
 categories = ["command-line-utilities"]
@@ -13,7 +13,7 @@ keywords = ["cli", "password-manager", "tool"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.4.11", features = ["derive"] }
+clap = { version = "4.4.11", features = ["derive", "cargo"] }
 console = "0.15.7"
 dialoguer = "0.11.0"
 path-absolutize = "3.1.1"
