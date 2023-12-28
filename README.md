@@ -18,10 +18,12 @@ fa list --store bingus_store # list all credentials on bingus store.
 # search
 fa search meo # search for all credentials beginning with 'meow' on 'default' store
 fa search bingus --store bingus_store # search for all credentials beginning with 'bingus' on 'bingus_store'
+fa search meo --filter site/isitayush.dev # search for all credentials that match both the 'meow' filter and site 'isitayush.dev' filter.
 fa search '' --filter site/isitayush.dev # search for all credetentials that match 'isitayush.dev' site.
 fa search '' --filter tag/personal # search for all credentials that match the tag 'personal'
-fa search meo --filter site/isitayush.dev # search for all credentials that match both the 'meow' filter and site 'isitayush.dev' filter.
 
+# remove
+fa remove meow@isitayush.dev password # remove the credential from the store.
 
 # store usage
 fs store list # list all stores

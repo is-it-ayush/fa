@@ -67,6 +67,11 @@ impl Fa {
                 site,
                 tag,
             }) => self.command_add(user, password, store, site, tag, &state),
+            Some(FaCommands::Remove {
+                user,
+                password,
+                store,
+            }) => self.command_remove(user, password, store, &state),
             Some(FaCommands::Search {
                 query,
                 store,
@@ -336,6 +341,35 @@ impl Fa {
             style(&user).bold().bright(),
             style(&store.name).bold().bright()
         );
+        Ok(())
+    }
+
+    fn command_remove(
+        &mut self,
+        user: &str,
+        password: &str,
+        passed_store: &Option<String>,
+        state: &FaApplicationState,
+    ) -> Result<(), FaError> {
+        let mut store: Store = self.get_store(passed_store, state, true)?;
+        let credential_index = store
+            .data
+            .iter()
+            .position(|cred| cred.user == user && cred.password == password);
+
+        if let Some(index) = credential_index {
+            store.data.remove(index);
+            println!(
+                "{} | You've {} removed '{}' login to {} store.",
+                style("fa").bold().dim(),
+                style("successfully").green(),
+                style(&user).bold().bright(),
+                style(&store.name).bold().bright()
+            );
+            // save store.
+            store.save(&state.configuration._inner.security.gpg_fingerprint)?;
+        }
+
         Ok(())
     }
 

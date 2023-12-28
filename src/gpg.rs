@@ -23,7 +23,6 @@ impl Gpg {
             .ok_or(FaError::UnexpectedNone)?
             .write_all(&data)?;
         let output = gpg_decrypt.wait_with_output()?;
-
         if output.status.code().ok_or(FaError::UnexpectedNone)? != 0 {
             return Err(FaError::GPGDecryptionError);
         }
