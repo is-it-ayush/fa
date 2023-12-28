@@ -41,9 +41,9 @@ fa -V # print the version
 
 - you'll need a gpg key id/fingerprint. [read this blog](https://docs.github.com/en/authentication/managing-commit-signature-verification/generating-a-new-gpg-key) till step 4.
 - goto [releases](https://github.com/is-it-ayush/fa/releases) and download the latest version and extract the `fa` binary.
-  - linux: put the binary in `/usr/bin/` and run `chmod +x /usr/bin/fa`. i'm assuming `/usr/bin` is in your `$HOME` variable. you can now, run `fa init` on your terminal.
-  - mac: put the binary inside the directory where you store your mac binaries (it has to be on path) and grant it perms to execute itself. i'm sorry, i don't own a mac so i don't know this one for sure.
-  - windows: put it anywhere you like, copy it's location and add it to `$PATH` environment variable and then open command prompt/terminal & run `fa init`.
+  - `linux`: put the binary in `/usr/bin/` and run `chmod +x /usr/bin/fa`. i'm assuming `/usr/bin` is in your `$HOME` variable. you can now, run `fa init` on your terminal.
+  - `mac`: put the binary inside the directory where you store your mac binaries (it has to be on path) and grant it perms to execute itself. i'm sorry, i don't own a mac so i don't know this one for sure.
+  - `windows`: put it anywhere you like, copy it's location and add it to `$PATH` environment variable and then open command prompt/terminal & run `fa init`.
 
 > if possible! i'll make this easier for future releases.
 
