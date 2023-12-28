@@ -273,26 +273,24 @@ impl Fa {
                 style("fa").bold().dim()
             );
         } else {
-            for (key, group) in store.data.iter() {
-                for val in group.iter() {
-                    let site = match &val.site {
-                        Some(s) => s,
-                        None => "-",
-                    };
+            for cred in store.data.iter() {
+                let site = match &cred.site {
+                    Some(s) => s,
+                    None => "-",
+                };
 
-                    let tag = match &val.tag {
-                        Some(t) => t,
-                        None => "-",
-                    };
-                    println!(
-                        "{} | {} ~ {} | {} | {}",
-                        style("fa").bold().dim(),
-                        key,
-                        val.password,
-                        site,
-                        tag
-                    );
-                }
+                let tag = match &cred.tag {
+                    Some(t) => t,
+                    None => "-",
+                };
+                println!(
+                    "{} | {} | {} | {} | {}",
+                    style("fa").bold().dim(),
+                    cred.user,
+                    cred.password,
+                    site,
+                    tag
+                );
             }
         }
 
@@ -301,7 +299,7 @@ impl Fa {
 
     fn command_add(
         &mut self,
-        user: &String,
+        user: &str,
         password: &str,
         passed_store: &Option<String>,
         passed_site: &Option<String>,
@@ -310,19 +308,27 @@ impl Fa {
     ) -> Result<(), FaError> {
         let mut store: Store = self.get_store(passed_store, state, true)?;
 
-        let cred = Credential {
-            password: password.to_owned(),
-            tag: passed_tag.clone(),
-            site: passed_site.clone(),
-        };
-
-        store
+        // check if exists.
+        if store
             .data
-            .entry(user.to_owned())
-            .or_insert_with(Vec::new)
-            .push(cred);
+            .iter()
+            .any(|s| s.user.eq(user) && s.password.eq(password))
+        {
+            return Err(FaError::CredentialsAlreadyExists);
+        }
+
+        // does not exist, create.
+        store.data.push(Credential {
+            password: String::from(password),
+            user: String::from(user),
+            tag: passed_tag.to_owned(),
+            site: passed_site.to_owned(),
+        });
+
+        // save store.
         store.save(&state.configuration._inner.security.gpg_fingerprint)?;
 
+        // tell user.
         println!(
             "{} | You've {} added '{}' login to {} store.",
             style("fa").bold().dim(),
@@ -333,7 +339,6 @@ impl Fa {
         Ok(())
     }
 
-    // sigh...there is a better way to write this but right now i'm not tidying it up.
     fn command_search(
         &mut self,
         passed_query: &str,
@@ -351,27 +356,24 @@ impl Fa {
                 style(&query).bold().green().bright(),
                 style(store.name).bold().bright()
             );
-            for (key, cred_group) in store.data.iter() {
-                if key.to_lowercase().starts_with(&query) {
-                    for cred in cred_group.iter() {
-                        let site = match &cred.site {
-                            Some(s) => s,
-                            None => "-",
-                        };
-
-                        let tag = match &cred.tag {
-                            Some(t) => t,
-                            None => "-",
-                        };
-                        println!(
-                            "{} | {} ~ {} | {} | {}",
-                            style("fa").bold().dim(),
-                            key,
-                            cred.password,
-                            site,
-                            tag
-                        );
-                    }
+            for cred in store.data.iter() {
+                if cred.user.to_lowercase().starts_with(&query) {
+                    let site = match &cred.site {
+                        Some(s) => s,
+                        None => "-",
+                    };
+                    let tag = match &cred.tag {
+                        Some(t) => t,
+                        None => "-",
+                    };
+                    println!(
+                        "{} | {} | {} | {} | {}",
+                        style("fa").bold().dim(),
+                        cred.user,
+                        cred.password,
+                        site,
+                        tag
+                    );
                 }
             }
         } else {
@@ -402,45 +404,43 @@ impl Fa {
                 style(&filter_query).bold().green().bright()
             );
 
-            for (key, cred_group) in store.data.iter() {
-                if key.to_lowercase().starts_with(&query) {
-                    for cred in cred_group.iter() {
-                        let site = match &cred.site {
-                            Some(s) => s,
-                            None => "-",
-                        };
-                        let tag = match &cred.tag {
-                            Some(t) => t,
-                            None => "-",
-                        };
-                        match filter {
-                            "site" => {
-                                if site.starts_with(filter_query) {
-                                    println!(
-                                        "{} | {} ~ {} | {} | {}",
-                                        style("fa").bold().dim(),
-                                        key,
-                                        cred.password,
-                                        site,
-                                        tag
-                                    );
-                                }
+            for cred in store.data.iter() {
+                if cred.user.to_lowercase().starts_with(&query) {
+                    let site = match &cred.site {
+                        Some(s) => s,
+                        None => "-",
+                    };
+                    let tag = match &cred.tag {
+                        Some(t) => t,
+                        None => "-",
+                    };
+                    match filter {
+                        "site" => {
+                            if site.starts_with(filter_query) {
+                                println!(
+                                    "{} | {} | {} | {} | {}",
+                                    style("fa").bold().dim(),
+                                    cred.user,
+                                    cred.password,
+                                    site,
+                                    tag
+                                );
                             }
-                            "tag" => {
-                                if tag.starts_with(filter_query) {
-                                    println!(
-                                        "{} | {} ~ {} | {} | {}",
-                                        style("fa").bold().dim(),
-                                        key,
-                                        cred.password,
-                                        site,
-                                        tag
-                                    );
-                                }
+                        }
+                        "tag" => {
+                            if tag.starts_with(filter_query) {
+                                println!(
+                                    "{} | {} | {} | {} | {}",
+                                    style("fa").bold().dim(),
+                                    cred.user,
+                                    cred.password,
+                                    site,
+                                    tag
+                                );
                             }
-                            _ => {
-                                println!("You know, this code should've never been executed. I think my code sucks.");
-                            }
+                        }
+                        _ => {
+                            println!("You know, this code should've never been executed. I think my code sucks.");
                         }
                     }
                 }
