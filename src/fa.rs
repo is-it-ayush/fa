@@ -215,7 +215,7 @@ impl Fa {
                     style("fa").bold().dim(),
                     style("Successfully").bold().green(),
                     style(store).bright()
-                 );
+                );
             }
             FaCommandStore::Default { store } => {
                 // check if exists.
