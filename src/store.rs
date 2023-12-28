@@ -9,8 +9,10 @@ use std::{
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Credential {
+    // pair of user and password are supposed to be unique across the entire store.
     pub user: String,
     pub password: String,
+
     pub site: Option<String>,
     pub tag: Option<String>,
 }
@@ -93,6 +95,7 @@ impl Store {
         let mut store_file = File::options()
             .write(true)
             .create(true)
+            .truncate(true)
             .append(false)
             .open(&self.path)?;
         let encrypted_data = Gpg::encrypt(fingerprint, &data_str)?;

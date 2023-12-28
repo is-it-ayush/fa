@@ -48,6 +48,22 @@ pub enum FaCommands {
         site: Option<String>,
     },
 
+    #[command(about = "remove an existing credential.")]
+    Remove {
+        #[arg(
+            index = 1,
+            help = "a required login.",
+            long_help = "this could be your email, username, login or any other identifier that goes along with your password."
+        )]
+        user: String,
+
+        #[arg(index = 2, help = "a required password.")]
+        password: String,
+
+        #[arg(long, short, required = false, help = "an optional store name.")]
+        store: Option<String>,
+    },
+
     #[command(about = "search through your store.")]
     Search {
         #[arg(
