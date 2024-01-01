@@ -71,7 +71,7 @@ pub enum FaCommands {
             short,
             required = false,
             help = "an optional filter.",
-            long_help = "an optional filter that is applied onto your search query. the format is <filter>/<filter_query> where <filter> can be either 'site' or 'tag' and <filter_query> would be your filter specific query."
+            long_help = "an optional filter that is applied onto your search query. The format is <filter>/<filter_query> where <filter> can be either 'site' or 'tag' and <filter_query> would be your filter specific query."
         )]
         filter: Option<String>,
     },
@@ -91,6 +91,34 @@ pub enum FaCommands {
 
         #[arg(long, short = 'p', help = "a required store path")]
         store_path: Option<String>,
+    },
+
+    #[command(about = "import your credentials from a csv file to a store.")]
+    Import {
+        #[arg(long, short, required = false, help = "an optional store name.")]
+        store: Option<String>,
+
+        #[arg(
+            long,
+            short = 'c',
+            help = "a required csv file path.",
+            long_help = "a required csv file path. The only requirement is that the csv file must contain a 'username', 'password' column and an optional 'url' column."
+        )]
+        csv_file: String,
+    },
+
+    #[command(about = "export your credentails from a store to a csv file.")]
+    Export {
+        #[arg(long, short, required = false, help = "an optional store name.")]
+        store: Option<String>,
+
+        #[arg(
+            long,
+            short = 'c',
+            help = "a required csv file path.",
+            long_help = "a required csv file path. You can provide any name to the csv file. 'fa' will either overwrite or create one for you."
+        )]
+        csv_file: String,
     },
 }
 

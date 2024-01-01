@@ -98,4 +98,11 @@ pub enum FaError {
         #[from]
         source: dialoguer::Error,
     },
+
+    /// result ---> result
+    #[error("Could not handle the provided file. It returned \"{}\"", source)]
+    CSVError {
+        #[from]
+        source: csv::Error,
+    },
 }

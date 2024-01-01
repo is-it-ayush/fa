@@ -7,7 +7,21 @@ use crate::{
 };
 use clap::Parser;
 use dialoguer::Input;
-use std::{ffi::OsStr, fs, path::Path};
+use path_absolutize::Absolutize;
+use serde::Deserialize;
+use std::{
+    ffi::OsStr,
+    fs::{self, File},
+    path::Path,
+};
+
+/// The struct is only used for import and export.
+#[derive(Debug, Deserialize)]
+struct ParsedCredential {
+    username: String,
+    password: String,
+    url: Option<String>,
+}
 
 #[derive(Debug, Clone)]
 pub struct Fa {
@@ -77,6 +91,12 @@ impl Fa {
                 store,
                 filter,
             }) => self.command_search(query, store, filter, &state),
+            Some(FaCommands::Import { store, csv_file }) => {
+                self.command_import(store, csv_file, &state)
+            }
+            Some(FaCommands::Export { store, csv_file }) => {
+                self.command_export(store, csv_file, &state)
+            }
 
             // do nothing
             Some(FaCommands::Init { .. }) => Ok(()),
@@ -480,6 +500,119 @@ impl Fa {
                 }
             }
         }
+        Ok(())
+    }
+
+    pub fn command_import(
+        &mut self,
+        passed_store: &Option<String>,
+        passed_csv_path: &String,
+        state: &FaApplicationState,
+    ) -> Result<(), FaError> {
+        let mut store = self.get_store(passed_store, state, true)?;
+        let csv_file_path = Path::new(&passed_csv_path).absolutize()?;
+        let mut csv_reader = csv::Reader::from_path(&csv_file_path)?;
+        let mut cred_count = 0;
+
+        for record_result in csv_reader.deserialize() {
+            let record: ParsedCredential = record_result?;
+
+            // skip if exists.
+            if store
+                .data
+                .iter()
+                .any(|s| s.user.eq(&record.username) && s.password.eq(&record.password))
+            {
+                println!(
+                    "{} | Skipping '{}'. It as already present.",
+                    style("fa").bold().dim(),
+                    style(&record.username).bold().red().bright(),
+                );
+                continue;
+            }
+
+            // does not exist, add.
+            store.data.push(Credential {
+                password: String::from(&record.password),
+                user: String::from(&record.username),
+                tag: None,
+                site: record.url,
+            });
+            cred_count += 1;
+
+            // tell user.
+            println!(
+                "{} | You've {} added '{}' login to {} store.",
+                style("fa").bold().dim(),
+                style("successfully").green(),
+                style(&record.username).bold().bright(),
+                style(&store.name).bold().bright()
+            );
+        }
+
+        // save store.
+        store.save(&state.configuration._inner.security.gpg_fingerprint)?;
+
+        println!(
+            "{} | {} imported {} credentials from csv file {} to {} store.",
+            style("fa").bold().dim(),
+            style("Successfully").green(),
+            style(cred_count).bold().bright(),
+            style(&csv_file_path.to_str().ok_or(FaError::UnexpectedNone)?)
+                .bold()
+                .bright(),
+            style(&store.name).bold().bright()
+        );
+
+        Ok(())
+    }
+
+    pub fn command_export(
+        &mut self,
+        passed_store: &Option<String>,
+        passed_csv_path: &String,
+        state: &FaApplicationState,
+    ) -> Result<(), FaError> {
+        let store = self.get_store(passed_store, state, false)?;
+        let csv_file_path = Path::new(&passed_csv_path).absolutize()?;
+        let csv_file = File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open(&csv_file_path)?;
+        let mut csv_writer = csv::Writer::from_writer(csv_file);
+        let mut cred_count = 0;
+
+        csv_writer.write_record(["username", "password", "url"])?;
+        for record in store.data.iter() {
+            let url = match record.site.clone() {
+                Some(u) => u,
+                None => String::new(),
+            };
+            csv_writer.write_record([&record.user, &record.password, &url])?;
+            cred_count += 1;
+            println!(
+                "{} | You've {} exported '{}' login to {} store.",
+                style("fa").bold().dim(),
+                style("successfully").green(),
+                style(&record.user).bold().bright(),
+                style(&store.name).bold().bright()
+            );
+        }
+        csv_writer.flush()?;
+
+        println!(
+            "{} | {} exported {} credentials from {} store to {}.",
+            style("fa").bold().dim(),
+            style("Successfully").green(),
+            style(cred_count).bold().bright(),
+            style(&store.name).bold().bright(),
+            style(&csv_file_path.to_str().ok_or(FaError::UnexpectedNone)?)
+                .bold()
+                .bright()
+        );
+
         Ok(())
     }
 

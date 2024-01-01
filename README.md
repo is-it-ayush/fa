@@ -31,6 +31,10 @@ fs store add spoingus_store # create a new store 'spoingus_store'.
 fs store default spoingus_store # set the default store to 'spoingus_store'.
 fs store remove spoingus_store # remove the spoingus store.
 
+# export & import
+fa import --csv-file ./mock/import/sample_data.csv # import credentails from sample_data.csv (the only required condition is that the csv must contain a username & a password column. it can also contain an optional url column. all other fields would be ignored)
+fa export --csv-file ./mock/export/sample_export.csv # export credentials to sample_export.csv (this creates/overwrites the file for you).
+
 # other
 fa config view # display the configuration utilized by 'fa'.
 fa store add -h # get help for a specific command
