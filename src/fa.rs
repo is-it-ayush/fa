@@ -11,7 +11,8 @@ use path_absolutize::Absolutize;
 use serde::Deserialize;
 use std::{
     ffi::OsStr,
-    fs::{self, File}, path::Path,
+    fs::{self, File},
+    path::Path,
 };
 
 /// The struct is only used for import and export.
@@ -90,11 +91,11 @@ impl Fa {
                 store,
                 filter,
             }) => self.command_search(query, store, filter, &state),
-            Some(FaCommands::Import { store, csv_path }) => {
-                self.command_import(store, csv_path, &state)
+            Some(FaCommands::Import { store, csv_file }) => {
+                self.command_import(store, csv_file, &state)
             }
-            Some(FaCommands::Export { store, csv_path }) => {
-                self.command_export(store, csv_path, &state)
+            Some(FaCommands::Export { store, csv_file }) => {
+                self.command_export(store, csv_file, &state)
             }
 
             // do nothing
@@ -505,20 +506,11 @@ impl Fa {
     pub fn command_import(
         &mut self,
         passed_store: &Option<String>,
-        passed_csv_path: &Option<String>,
+        passed_csv_path: &String,
         state: &FaApplicationState,
     ) -> Result<(), FaError> {
         let mut store = self.get_store(passed_store, state, true)?;
-        let csv_file_path_string = match passed_csv_path {
-            Some(passed_path) => passed_path.to_owned(),
-            None => Input::<String>::new()
-                .with_prompt(format!(
-                    "{} | Where is the \".csv\" file that you'd like to try import from?",
-                    ROAD
-                ))
-                .interact_text()?,
-        };
-        let csv_file_path = Path::new(&csv_file_path_string).absolutize()?;
+        let csv_file_path = Path::new(&passed_csv_path).absolutize()?;
         let mut csv_reader = csv::Reader::from_path(&csv_file_path)?;
         let mut cred_count = 0;
 
@@ -578,20 +570,11 @@ impl Fa {
     pub fn command_export(
         &mut self,
         passed_store: &Option<String>,
-        passed_csv_path: &Option<String>,
+        passed_csv_path: &String,
         state: &FaApplicationState,
     ) -> Result<(), FaError> {
         let store = self.get_store(passed_store, state, false)?;
-        let csv_file_path_string = match passed_csv_path {
-            Some(passed_path) => passed_path.to_owned(),
-            None => Input::<String>::new()
-                .with_prompt(format!(
-                    "{} | Could you provide the path to the \".csv\" file that you would want to export your credentials to?",
-                    ROAD
-                ))
-                .interact_text()?,
-        };
-        let csv_file_path = Path::new(&csv_file_path_string).absolutize()?;
+        let csv_file_path = Path::new(&passed_csv_path).absolutize()?;
         let csv_file = File::options()
             .read(true)
             .write(true)

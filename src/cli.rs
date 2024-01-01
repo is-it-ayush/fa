@@ -102,12 +102,12 @@ pub enum FaCommands {
             long,
             short = 'c',
             help = "a required csv file path.",
-            long_help = "a required csv file path. the only requirement is that the csv file must contain a 'username', 'password' field and an optional 'url' field. "
+            long_help = "a required csv file path. the only requirement is that the csv file must contain a 'username', 'password' field and an optional 'url' field."
         )]
-        csv_path: Option<String>,
+        csv_file: String,
     },
 
-    #[command(about = "export your credentails to a csv file from a store.")]
+    #[command(about = "export your credentails from a store to a csv file.")]
     Export {
         #[arg(long, short, required = false, help = "an optional store name.")]
         store: Option<String>,
@@ -118,7 +118,7 @@ pub enum FaCommands {
             help = "a required csv file path.",
             long_help = "a required csv file path. you can provide any name to the csv file. 'fa' will either overwrite or create one for you."
         )]
-        csv_path: Option<String>,
+        csv_file: String,
     },
 }
 
