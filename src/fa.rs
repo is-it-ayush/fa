@@ -11,9 +11,7 @@ use path_absolutize::Absolutize;
 use serde::Deserialize;
 use std::{
     ffi::OsStr,
-    fs::{self, File},
-    io::BufWriter,
-    path::Path,
+    fs::{self, File}, path::Path,
 };
 
 /// The struct is only used for import and export.
