@@ -35,8 +35,10 @@ fs store remove spoingus_store # remove the spoingus store.
 fa import --csv-file ./mock/import/sample_data.csv # import credentails from sample_data.csv (the only required condition is that the csv must contain a username & a password column. it can also contain an optional url column. all other fields would be ignored)
 fa export --csv-file ./mock/export/sample_export.csv # export credentials to sample_export.csv (this creates/overwrites the file for you).
 
+# configuration
+fa config # display the configuration utilized by 'fa'.
+
 # other
-fa config view # display the configuration utilized by 'fa'.
 fa store add -h # get help for a specific command
 fa -V # print the version
 ```
@@ -73,6 +75,7 @@ gpg_fingerprint = "ABCDEF0123456789" # you can also use the full fingerprint
 - [x] better output and input
 - [x] create, remove and default store command.
 - [x] remove credential
+- [x] import and export (from a csv file)
 - [x] better internal data structure instead of `Hashmap<K,V>`.
 it might give me more ways to store more information. such as the
   - assocaited websites
