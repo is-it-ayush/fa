@@ -81,7 +81,7 @@ it might give me more ways to store more information. such as the
   - assocaited websites
   - tags?
   - post implementation note: `Credential` struct is meh but it works so i'm not complaining :3.
-- [ ] copy to clipboard
+- ~~[ ] copy to clipboard~~ ...i'd add this if i ever planned on making a tui. i don't really need this rn.
 - [ ] generator
 - [ ] better ci and possibly arm64/v8 build.
 
