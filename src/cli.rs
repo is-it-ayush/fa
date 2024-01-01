@@ -16,11 +16,11 @@ pub struct FaCli {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum FaCommands {
-    #[command(subcommand, about = "all configuration commands.")]
-    Config(FaCommandConfig),
-
     #[command(subcommand, about = "all store commands.")]
     Store(FaCommandStore),
+
+    #[command(about = "view the current configuration utilized by 'fa'.")]
+    Config,
 
     #[command(about = "list all the stored credentials.")]
     List {
@@ -120,12 +120,6 @@ pub enum FaCommands {
         )]
         csv_file: String,
     },
-}
-
-#[derive(Subcommand, Debug, Clone)]
-pub enum FaCommandConfig {
-    #[command(about = "view the current configuration utilized by 'fa'.")]
-    View,
 }
 
 #[derive(Subcommand, Debug, Clone)]

@@ -1,5 +1,5 @@
 use crate::{
-    cli::{FaCli, FaCommandConfig, FaCommandStore, FaCommands},
+    cli::{FaCli, FaCommandStore, FaCommands},
     config::Config,
     error::FaError,
     gpg::Gpg,
@@ -69,10 +69,10 @@ impl Fa {
 
         match cloned_command {
             // command group
-            Some(FaCommands::Config(fc)) => self.command_group_config(fc, &state),
             Some(FaCommands::Store(fs)) => self.command_group_store(fs, &mut state),
 
             // command
+            Some(FaCommands::Config) => self.command_config(&state),
             Some(FaCommands::List { store }) => self.command_list(store, &state),
             Some(FaCommands::Add {
                 user,
@@ -140,33 +140,6 @@ impl Fa {
     }
 
     /// Command Groups
-
-    fn command_group_config(
-        &self,
-        command_config: &FaCommandConfig,
-        state: &FaApplicationState,
-    ) -> Result<(), FaError> {
-        match command_config {
-            FaCommandConfig::View => {
-                let configuration_path = &state.configuration.config_file_path;
-                let store_path = &state.configuration._inner.store.base_path;
-                let store = &state.configuration._inner.store.default_store;
-                let fingerprint = &state.configuration._inner.security.gpg_fingerprint;
-
-                let fa_header = style("fa").bold().dim();
-                println!(
-                    "{} | Located Configuration At '{}'",
-                    fa_header,
-                    style(configuration_path).bold()
-                );
-                println!("{} | store.path: {}", fa_header, store_path);
-                println!("{} | store.default_store: {}", fa_header, store);
-                println!("{} | security.fingerprint: {} ", fa_header, fingerprint);
-
-                Ok(())
-            }
-        }
-    }
 
     fn command_group_store(
         &self,
@@ -275,6 +248,25 @@ impl Fa {
     }
 
     /// Command
+
+    fn command_config(&self, state: &FaApplicationState) -> Result<(), FaError> {
+        let configuration_path = &state.configuration.config_file_path;
+        let store_path = &state.configuration._inner.store.base_path;
+        let store = &state.configuration._inner.store.default_store;
+        let fingerprint = &state.configuration._inner.security.gpg_fingerprint;
+
+        let fa_header = style("fa").bold().dim();
+        println!(
+            "{} | Located Configuration At '{}'",
+            fa_header,
+            style(configuration_path).bold()
+        );
+        println!("{} | store.path: {}", fa_header, store_path);
+        println!("{} | store.default_store: {}", fa_header, store);
+        println!("{} | security.fingerprint: {} ", fa_header, fingerprint);
+
+        Ok(())
+    }
 
     fn command_list(
         &self,
